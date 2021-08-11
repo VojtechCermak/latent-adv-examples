@@ -89,7 +89,7 @@ class ProjectionBinarySearch(nn.Module):
                 if f(1) <= 0:
                     projected = x
                 else:
-                    c = self.binary_search(f, 0, 1, self.threshold, self.max_steps)
+                    c = self.binary_search_negative(f, 0, 1, self.threshold, self.max_steps)
                     projected = self.combine(one_x0, one_x, c)
             except ConvergenceError as e:
                 print(e)
@@ -99,14 +99,17 @@ class ProjectionBinarySearch(nn.Module):
         return torch.cat(results)
 
     @staticmethod
-    def binary_search(f, a, b, threshold=0.001, max_steps=100):
+    def binary_search_negative(f, a, b, threshold=0.001, max_steps=100):
+        '''
+        Binary search between a and b returning c with f(c) with -threshold <= f(c) < 0.
+        '''
         sign_a = torch.sign(f(a))
         sign_b = torch.sign(f(b))
         assert sign_b != sign_a
         for _ in range(max_steps):
             c = (a + b) / 2
             c_value = f(c)
-            if abs(c_value) < threshold:
+            if (c_value >= -threshold) and (c_value < 0):
                 return c
             else:
                 if torch.sign(c_value) == sign_a:
