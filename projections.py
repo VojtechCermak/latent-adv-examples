@@ -6,14 +6,16 @@ import numpy as np
 
 class ConvergenceError(Exception):
     pass
+    # TODO Shouldn't an error be here?
 
 
 class Projection():
     '''
-    Super class for projections.
+    Super class for projections of x onto some ball around x0.
     '''
     def __call__(self, x0, x):
         pass
+        # TODO Shouldn't an error be here?
 
 
 class ProjectionIdentity(Projection):
@@ -26,7 +28,7 @@ class ProjectionIdentity(Projection):
 
 class ProjectionL2(Projection):
     '''
-    Project x to Euklidean epsilon ball around x0.
+    Project x to the Euclidean epsilon ball around x0.
     '''
     def __init__(self, eps):
         self.eps = eps
@@ -44,7 +46,7 @@ class ProjectionL2(Projection):
 
 class ProjectionLinf(Projection):
     '''
-    Project x to l-inf epsilon ball around x0.
+    Project x to the l-inf epsilon ball around x0.
     '''
     def __init__(self, eps):
         self.eps = eps
@@ -115,6 +117,7 @@ class ProjectionBinarySearch(nn.Module):
             c = (a + b) / 2
             c_value = f(c)
             if abs(c_value) < threshold:
+                # TODO I do not think that this is a good idea. It will give horrible results for any linear function f.
                 return a, b
             else:
                 if torch.sign(c_value) == sign_a:

@@ -5,15 +5,20 @@ from objectives import Margin
 
 class Constraint(nn.Module):
     '''
-    Base class for constraints functions g(x).
+    Base class for constraints functions g(x) <= 0.
     '''
     pass
 
 
 class ConstraintMisclassify(Constraint):
     '''
-    Wraps margin function as constraint function g(x).
-    g(x) < 0 if model classifies x differently than x0.
+    Other class than x0 must be predicted.
+    
+    y = class(x0)
+    prediction = softmax(model(x))
+    max_{i not y}(prediction[i]) >= prediction[y]
+
+    g(x) := -Margin(prediction, y) <= 0
     '''
     def __init__(self, x0, model, softmax=True):
         super().__init__()
@@ -33,6 +38,7 @@ class ConstraintMisclassify(Constraint):
             raise ValueError('x and subset of x0 have different batch size.')
 
         prediction = self.model(x)
+        # TODO there should be a check that prediction has at most two dimensions
         if self.softmax:
             prediction = F.softmax(prediction, 1)
         return -self.margin(prediction, y)
@@ -40,8 +46,9 @@ class ConstraintMisclassify(Constraint):
 
 class ConstraintDistance(Constraint):
     '''
-    Wraps distance function d(x0, x) as constraint function g(x).
-    g(x) < 0 if dist(x, x0) < epsilon.
+    Prescribed maximal distance via distance(x, x0) <= epsilon.
+    
+    g(x) := distance(x, x0) - epsilon <= 0
     '''
     def __init__(self, x0, distance, epsilon):
         super().__init__()

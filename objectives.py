@@ -4,7 +4,8 @@ import torch.nn.functional as F
 
 class Objective(nn.Module):
     '''
-    Wraps Pytorch loss function in form of f(x, y) as objective in form of f(x).
+    Objective(x) = loss(model(x), y) if targetted or 
+    Objective(x) = -loss(model(x), y) if not targetted.
     '''
     def __init__(self, y, loss, model, targeted):
         super().__init__()
@@ -16,25 +17,27 @@ class Objective(nn.Module):
     def forward(self, x):
         prediction  = self.model(x)
         if self.targeted:
-            return self.loss(prediction , self.y)
+            return self.loss(prediction, self.y)
         else:
-            return -self.loss(prediction , self.y)
+            return -self.loss(prediction, self.y)
 
 
 class Margin(nn.Module):
     '''
-    Calculates margin: max_{i not y}(x[i]) - x[y]
+    Objective(x) = Margin(prediction, k)
+
+    Margin(prediction, k) = max_{i not k}(prediction[i]) - prediction[k]
     '''
-    def forward(self, prediction, y):
-        assert prediction.shape[0] == y.shape[0]
+    def forward(self, prediction, k):
+        assert prediction.shape[0] == k.shape[0]
         assert prediction.ndim <= 2
 
         mask = torch.full_like(prediction, False, dtype=torch.bool)
-        mask[range(prediction.shape[0]), y] = True
+        mask[range(prediction.shape[0]), k] = True
 
         prediction_other = prediction[~mask].view(prediction.shape[0], -1)
-        prediction_y = prediction[mask]
-        return prediction_other.max(1)[0] - prediction_y
+        prediction_k = prediction[mask]
+        return prediction_other.max(1)[0] - prediction_k
 
 
 class CrossEntropyLossOH(nn.Module):
