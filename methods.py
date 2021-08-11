@@ -31,7 +31,7 @@ def calculate_batch(variables):
 
 def calculate_gradients(objective, x, norm=None):
     '''
-    Calculates gradient of f(x) at x.
+    Calculates gradient of objective(x) at x.
     '''
     x = x.detach()
     x.requires_grad = True
@@ -54,12 +54,15 @@ def fgsm(x0, y, classifier, epsilon):
     '''
     objective = Objective(y, nn.CrossEntropyLoss(), classifier, targeted=False)
     projection = ProjectionLinf(epsilon)
+    # TODO I believe that this is wrong. The step_size should be huge.
+    # TODO It will not work for epsilon > 1 (but we probably do not need it).
+    # TODO clip is wrong
     return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(x0.min().item(), x0.max().item()))
 
 
 def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip=None):
     '''
-    Projected Gradient Descent method of Madry.
+    Projected Gradient Descent method.
     '''
     x = x0.clone()
     for _ in range(steps):
@@ -79,7 +82,7 @@ def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip
 
 def bisection_method(x0, x, model):
     constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001, inside=False)
+    projection = ProjectionBinarySearch(constraint, threshold=0.001)
     return projection(x0, x)
 
 
@@ -92,7 +95,7 @@ def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad
         - Do we need normalise gradient in the projection step?
     '''
     constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001, inside=True)
+    projection = ProjectionBinarySearch(constraint, threshold=0.001)
     objective = lambda x: distance(x0, x)
 
     # Project in direction of min distance
@@ -140,7 +143,7 @@ def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_
 @calculate_batch(variables=2)
 def projected_gd_method(x0, x, distance, model, xi_o, xi_c, iters=100):
     constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001, inside=False)
+    projection = ProjectionBinarySearch(constraint, threshold=0.001)
     x = projection(x0, x)
     for t in range(iters):
         # Update objective
