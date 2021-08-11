@@ -1,0 +1,49 @@
+[
+    {
+        "generator": "cifar-ali",
+        "generator_level": 2,
+        "classifier": "cifar-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "xi_c": {"scheduler": "SchedulerPower", "initial": 1, "power": -0.5},
+            "xi_o": {"scheduler": "SchedulerConstant", "alpha": 1}
+        }
+    }, {
+        "generator": "cifar-ali",
+        "generator_level": 2,
+        "classifier": "cifar-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "xi_c": {"scheduler": "SchedulerPower", "initial": 1, "power": -0.5},
+            "xi_o": {"scheduler": "SchedulerConstant", "alpha": 1}
+        }
+    },{
+        "generator": "cifar-ali",
+        "generator_level": 2,
+        "classifier": "cifar-cls",
+        "method": "penalty",
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "rho": {"scheduler": "SchedulerStep", "initial": 10e8, "gamma": 1, "n": 10},
+            "xi": {"scheduler": "SchedulerExponential", "initial": 1, "gamma": 0.01}
+        }
+    },{
+        "generator": "cifar-ali",
+        "generator_level": 2,
+        "classifier": "cifar-cls",
+        "method": "penalty",
+        "params": {
+            "iters": 1000,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "rho": {"scheduler": "SchedulerStep", "initial": 10e8, "gamma": 1, "n": 10},
+            "xi": {"scheduler": "SchedulerExponential", "initial": 1, "gamma": 0.01}
+        }
+    }
+]

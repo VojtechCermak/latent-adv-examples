@@ -197,7 +197,7 @@ def penalty_method_wrapped(
     if xi is None:
         xi = {'scheduler': 'SchedulerExponential', 'initial': 1, 'gamma': 0.01}
     rho = getattr(schedulers, rho.pop('scheduler'))(**rho)
-    xi = getattr(schedulers, xi.pop('scheduler'))(**rho)
+    xi = getattr(schedulers, xi.pop('scheduler'))(**xi)
 
     if distance == 'l2':
         transform = distances.Decoded(generator)
@@ -227,7 +227,7 @@ def projection_method_wrapped(
         xi_c = {'scheduler': 'SchedulerPower', 'initial': 1, 'power': -0.5}
     if xi_o is None:
         xi_o = {'scheduler': 'SchedulerConstant','alpha': 1}
-        
+
     xi_c = getattr(schedulers, xi_c.pop('scheduler'))(**xi_c)
     xi_o = getattr(schedulers, xi_o.pop('scheduler'))(**xi_o)
 
