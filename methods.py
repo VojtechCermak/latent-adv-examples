@@ -54,7 +54,7 @@ def fgsm(x0, y, classifier, epsilon):
     '''
     objective = Objective(y, nn.CrossEntropyLoss(), classifier, targeted=False)
     projection = ProjectionLinf(epsilon)
-    return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(x0.min(), x0.max()))
+    return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(x0.min().item(), x0.max().item()))
 
 
 def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip=None):
