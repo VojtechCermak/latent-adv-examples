@@ -73,7 +73,6 @@ class GeomLoss(Distance):
     Calculates distance from the geomloss library between two BCHW samples.
     Final distance is the sum of distances in each channel.
     '''
-    # TODO I need to check this. LATER
     def __init__(self, loss_function, transform=None):
         super().__init__(transform)
         self.loss_function = loss_function
