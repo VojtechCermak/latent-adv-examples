@@ -79,9 +79,9 @@ def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip
     return x
 
 
-def bisection_method(x0, x, model):
+def bisection_method(x0, x, model, threshold=1e-6):
     constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001)
+    projection = ProjectionBinarySearch(constraint, threshold=threshold)
     return projection(x0, x)
 
 

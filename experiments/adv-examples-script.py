@@ -37,8 +37,8 @@ if __name__ == "__main__":
     device = args.device
     image_folder = args.path_output
     add_lsb = args.add_lsb
-    generator = CifarALI()
-    classifier = CifarClassifier()
+    generator = MnistALI()
+    classifier = MnistClassifier()
     combined = lambda z: classifier(generator.decode(z))
 
     # Sample data
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     grid_plot(batch_add_lsb(generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/latent_loss_wd.png')
 
     # 2. Latent - simple projection
-    z_per = bisection_method(z0, z, combined)
+    z_per = bisection_method(z0, z, combined, threshold=0.001)
     grid_plot(batch_add_lsb(generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/latent_simple_projection.png')
 
     # 2. Latent - penalty method l2
