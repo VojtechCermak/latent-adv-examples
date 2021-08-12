@@ -80,6 +80,11 @@ def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip
 
 
 def bisection_method(x0, x, model, threshold=1e-6):
+    '''
+    Interpolation between x and x0.
+
+    Assumes that x and x0 are classified into different classes.
+    '''
     constraint = ConstraintMisclassify(x0, model)
     projection = ProjectionBinarySearch(constraint, threshold=threshold)
     return projection(x0, x)
