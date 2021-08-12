@@ -56,8 +56,7 @@ def fgsm(x0, y, classifier, epsilon):
     projection = ProjectionLinf(epsilon)
     # TODO I believe that this is wrong. The step_size should be huge.
     # TODO It will not work for epsilon > 1 (but we probably do not need it).
-    # TODO clip is wrong
-    return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(x0.min().item(), x0.max().item()))
+    return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(0, 1))
 
 
 def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip=None):
