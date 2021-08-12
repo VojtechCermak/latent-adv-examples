@@ -1,6 +1,8 @@
 runs/
 __pycache__/
 literature/
+experiments/results/images*
+notebooks/images*
 .ipynb_checkpoints/
 
 
