@@ -7,7 +7,7 @@ from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 import importlib
 
-def grid_plot(img_batch, nrows=6, already_grid=False, figsize=None):
+def grid_plot(img_batch, save_as=None, nrows=6, already_grid=False, figsize=None):
     '''
     Plot tenosr batch of images. Input dimension format: (B,C,W,H)
     '''
@@ -22,7 +22,11 @@ def grid_plot(img_batch, nrows=6, already_grid=False, figsize=None):
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.imshow(grid)
-    plt.show()
+    if save_as is not None:
+        fig.savefig(save_as)
+        plt.close(fig)
+    else:
+        plt.show()
 
 def import_module(path, name='module'):
     '''
