@@ -6,7 +6,6 @@ import numpy as np
 
 class ConvergenceError(Exception):
     pass
-    # TODO Shouldn't an error be here?
 
 
 class Projection():
@@ -15,7 +14,6 @@ class Projection():
     '''
     def __call__(self, x0, x):
         pass
-        # TODO Shouldn't an error be here?
 
 
 class ProjectionIdentity(Projection):
@@ -89,7 +87,6 @@ class ProjectionBinarySearch(nn.Module):
             except ConvergenceError as e:
                 print(e)
                 projected = torch.full_like(x, float('nan'))
-            # TODO isn't appending too slow
             results.append(projected)
         return torch.cat(results)
 

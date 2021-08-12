@@ -33,14 +33,11 @@ class DecodedDistribution(Decoded):
     '''
     Transform z to decoded x such that its components are from (0, 1) and sum(x) = 1.
     G(z) = D(z) / ||D(z)||
-
-    # TODO we should specify how we handle channels everywhere
     '''
     def forward(self, z):
         x = self.decoder.decode(z)
         # TODO why do we have 1e-8 here?
         x[x<=0] = 1e-8
-        # TODO is this done separately for all channels? because l2 projection is computed for all channel jointly
         return x / x.norm(1, dim=(2, 3), keepdim=True)
 
 
@@ -68,8 +65,7 @@ class SquaredL2(Distance):
     Squared Euclidean distance
     '''
     def forward(self, a, b):
-        # TODO Why don't we have to deal with dimensions here?
-        return torch.sum((self.G(a) - self.G(b))**2)
+        return torch.sum((self.G(a) - self.G(b))**2, dim=tuple(range(1, a.ndim)))
 
 
 class GeomLoss(Distance):
