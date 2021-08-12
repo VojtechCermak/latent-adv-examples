@@ -83,14 +83,9 @@ class ProjectionBinarySearch(nn.Module):
             try:
                 one_x0 = x0[i].unsqueeze(0)
                 one_x = x[i].unsqueeze(0)
-                f = lambda c: self.constraint(self.combine(one_x0, one_x, c), subset=[i])
-                
-                assert f(0) < 0        
-                if f(1) <= 0:
-                    projected = x
-                else:
-                    c = self.binary_search_negative(f, 0, 1, self.threshold, self.max_steps)
-                    projected = self.combine(one_x0, one_x, c)
+                f = lambda c: self.constraint(self.combine(one_x0, one_x, c), subset=[i])                
+                c = self.binary_search_negative(f, 0, 1, self.threshold, self.max_steps)
+                projected = self.combine(one_x0, one_x, c)
             except ConvergenceError as e:
                 print(e)
                 projected = torch.full_like(x, float('nan'))
@@ -99,21 +94,26 @@ class ProjectionBinarySearch(nn.Module):
         return torch.cat(results)
 
     @staticmethod
-    def binary_search_negative(f, a, b, threshold=0.001, max_steps=100):
+    def binary_search_negative(f, a, b, threshold=1e-6, max_steps=100):
         '''
         Binary search between a and b returning c with f(c) with -threshold <= f(c) < 0.
         '''
         sign_a = torch.sign(f(a))
         sign_b = torch.sign(f(b))
-        assert sign_b != sign_a
-        for _ in range(max_steps):
-            c = (a + b) / 2
-            c_value = f(c)
-            if (c_value >= -threshold) and (c_value < 0):
-                return c
-            else:
-                if torch.sign(c_value) == sign_a:
-                    a = c
+        
+        if (sign_a < 0) and (sign_b < 0):
+            return b
+        elif (sign_a > 0) and (sign_b > 0):
+            raise ConvergenceError('Binary search has wrong initializaion')
+        else:
+            for _ in range(max_steps):
+                c = (a + b) / 2
+                c_value = f(c)
+                if (c_value >= -threshold) and (c_value < 0):
+                    return c
                 else:
-                    b = c
-        raise ConvergenceError('Binary search failed to converge')
+                    if torch.sign(c_value) == sign_a:
+                        a = c
+                    else:
+                        b = c
+            raise ConvergenceError('Binary search failed to converge')
