@@ -234,7 +234,7 @@ class CifarALI(PartialGeneratorBase):
     Pretrained CIFAR ALI model.
     '''
     def __init__(self, level='full', device='cuda'):
-        model = load_model(os.path.join(directory, 'runs', 'svhn', 'ali-cifar'), device=device)
+        model = load_model(os.path.join(directory, 'runs', 'cifar10', 'ali-cifar'), device=device)
         generator = model.gx.main
         sections = {
             0: {
@@ -264,7 +264,7 @@ class CifarDCGAN(PartialGeneratorBase):
     Pretrained CIFAR DCGAN model.
     '''
     def __init__(self, level='full', device='cuda'):
-        model = load_model(os.path.join(directory, 'runs', 'svhn', 'dcgan-cifar'), device=device)
+        model = load_model(os.path.join(directory, 'runs', 'cifar10', 'dcgan-cifar'), device=device)
         generator = model.g.main
         sections = {
             0: {
