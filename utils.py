@@ -31,16 +31,16 @@ def grid_plot(img_batch, save_as=None, nrows=6, already_grid=False, figsize=None
 def batch_add_lsb(img_batch, add_lsb=0):
     if add_lsb == 0:
         return img_batch
-    elif add_lsb == 1 or img_batch.shape[1] == 1:
+    elif (add_lsb == 1) or (img_batch.shape[1] == 1):
         sample_int = (img_batch*255).type(torch.uint8)
         img_add = torch.remainder(sample_int, 2).type(torch.float)
         return torch.cat((img_batch, img_add))
     elif add_lsb == 2:
         sample_int = (img_batch*255).type(torch.uint8)
         img_add = torch.remainder(sample_int, 2).type(torch.float)
-        img_add0 = torch.Tensor.repeat(img_add[:,0,:,:], (1,3,1,1))
-        img_add1 = torch.Tensor.repeat(img_add[:,1,:,:], (1,3,1,1))        
-        img_add2 = torch.Tensor.repeat(img_add[:,2,:,:], (1,3,1,1))        
+        img_add0 = torch.Tensor.repeat(img_add[:,0:1,:,:], (1,3,1,1))
+        img_add1 = torch.Tensor.repeat(img_add[:,1:2,:,:], (1,3,1,1))
+        img_add2 = torch.Tensor.repeat(img_add[:,2:3,:,:], (1,3,1,1))        
         return torch.cat((img_batch, img_add0, img_add1, img_add2))
         
 def import_module(path, name='module'):
