@@ -79,22 +79,29 @@ if __name__ == "__main__":
         # Construct latent vectors v
         v0 = generator.encode(z0)
         v = generator.encode(z)
-        v_per = method(v0, v, combined, generator)
+        v_per = method(v0, v, combined, generator, **experiment['params'])
+
+        # Collect results
+        x0 = generator.decode(v0)
+        x = generator.decode(v)
+        x_per = torch.zeros_like(x)
+        have_nan = torch.isnan(v_per).view(v_per.shape[0], -1).any(dim=1)
+        x_per[~have_nan] = generator.decode(v_per[~have_nan])
 
         data = {
             'meta':  experiment,
             'args':  vars(args),
-            'z0':    z0.cpu().numpy(),
-            'z':     z.cpu().numpy(),
-            'x0':    generator.decode(v0).cpu().detach().numpy(),
-            'x':     generator.decode(v).cpu().detach().numpy(),
-            'x_per': generator.decode(v_per).cpu().detach().numpy(),
+            'z0':    z0.cpu().detach().numpy(),
+            'z':     z.cpu().detach().numpy(),
+            'x0':    x0.cpu().detach().numpy(),
+            'x':     x.cpu().detach().numpy(),
+            'x_per': x_per.cpu().numpy(),
         }
         file_data.append(data)
         print(f'Part {i} done')
 
     time = datetime.now().strftime('%b%d-%H-%M-%S')
-    name = args.path_input.split('\\')[-1].split('.')[0]
+    name = args.path_input.split('/')[-1].split('.')[0]
     file_name = args.path_output + '/' + f'{name}_{time}' + '.pickle'
 
     with open(file_name, 'wb') as handle:
