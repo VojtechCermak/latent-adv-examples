@@ -10,6 +10,7 @@ import argparse
 sys.path.insert(0, "../")
 from utils import class_sampler, grid_plot, batch_add_lsb
 from models.pretrained import MnistALI, MnistClassifier
+from models.pretrained import CifarALI, CifarClassifier
 from schedulers import *
 from constraints import *
 from objectives import *
@@ -36,8 +37,8 @@ if __name__ == "__main__":
     device = args.device
     image_folder = args.path_output
     add_lsb = args.add_lsb
-    generator = MnistALI()
-    classifier = MnistClassifier()
+    generator = CifarALI()
+    classifier = CifarClassifier()
     combined = lambda z: classifier(generator.decode(z))
 
     # Sample data
@@ -105,89 +106,20 @@ if __name__ == "__main__":
     z_per = penalty_method(z0, distance, combined, xi, rho, iters=1000)
     grid_plot(batch_add_lsb(generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/latent_penalty_wd.png')
 
-    # 2. Latent - projection method WD
-    distance = L2(Decoded(generator))
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    z_per = projection_method(z0, z, distance, combined, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=150)
-    grid_plot(batch_add_lsb(generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/latent_projection_l2.png')
-
-    # 2. Latent - projection method WD
-    loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
-    distance = GeomLoss(loss_function, DecodedDistribution(generator))
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    z_per = projection_method(z0, z, distance, combined, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=150)
-    grid_plot(batch_add_lsb(generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/latent_projection_wd.png')
-
-
     # 3. Partial generators
-    # 3. Level 0
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    gp_generator = MnistALI(0)
-    gp_combined = lambda z: classifier(gp_generator.decode(z))
-    v0 = gp_generator.encode(z0)
-    v = gp_generator.encode(z)
+    for i in ['full', 0, 1, 2, 3]:
+        xi_o = SchedulerConstant(alpha=1)
+        xi_c = SchedulerPower(initial=1, power=-1/2)
+        gp_generator = MnistALI(i)
+        gp_combined = lambda z: classifier(gp_generator.decode(z))
+        v0 = gp_generator.encode(z0)
+        v = gp_generator.encode(z)
 
-    distance = L2(Decoded(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial0_projection_l2.png')
+        distance = L2(Decoded(gp_generator))
+        z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
+        grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial_{i}_projection_l2.png')
 
-    loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
-    distance = GeomLoss(loss_function, DecodedDistribution(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial0_projection_wd.png')
-
-    # 3. Level 1
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    gp_generator = MnistALI(1)
-    gp_combined = lambda z: classifier(gp_generator.decode(z))
-    v0 = gp_generator.encode(z0)
-    v = gp_generator.encode(z)
-
-    distance = L2(Decoded(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial1_projection_l2.png')
-
-    loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
-    distance = GeomLoss(loss_function, DecodedDistribution(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial1_projection_wd.png')
-
-
-    # 3. Level 2
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    gp_generator = MnistALI(2)
-    gp_combined = lambda z: classifier(gp_generator.decode(z))
-    v0 = gp_generator.encode(z0)
-    v = gp_generator.encode(z)
-
-    distance = L2(Decoded(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial2_projection_l2.png')
-
-    loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
-    distance = GeomLoss(loss_function, DecodedDistribution(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial2_projection_wd.png')
-
-
-    # 3. Level 3
-    xi_o = SchedulerConstant(alpha=1)
-    xi_c = SchedulerPower(initial=1, power=-1/2)
-    gp_generator = MnistALI(3)
-    gp_combined = lambda z: classifier(gp_generator.decode(z))
-    v0 = gp_generator.encode(z0)
-    v = gp_generator.encode(z)
-
-    distance = L2(Decoded(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial3_projection_l2.png')
-
-    loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
-    distance = GeomLoss(loss_function, DecodedDistribution(gp_generator))
-    z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
-    grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial3_projection_wd.png')
+        loss_function = SamplesLoss("sinkhorn", p=1, blur=0.1, scaling=0.5)
+        distance = GeomLoss(loss_function, DecodedDistribution(gp_generator))
+        z_per = projection_method(v0, v, distance, gp_combined, xi_c, xi_o, iters=150)
+        grid_plot(batch_add_lsb(gp_generator.decode(z_per), add_lsb=add_lsb), nrows=10, save_as=f'{image_folder}/partial_{i}_projection_wd.png')
