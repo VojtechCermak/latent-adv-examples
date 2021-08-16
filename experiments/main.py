@@ -95,7 +95,7 @@ if __name__ == "__main__":
             'z':     z.cpu().detach().numpy(),
             'x0':    x0.cpu().detach().numpy(),
             'x':     x.cpu().detach().numpy(),
-            'x_per': x_per.cpu().numpy(),
+            'x_per': x_per.cpu().detach().numpy(),
         }
         file_data.append(data)
         print(f'Part {i} done')
