@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchvision import transforms
 import numpy as np
 import os
 import json
@@ -284,6 +285,55 @@ class CifarDCGAN(PartialGeneratorBase):
         super().__init__(generator, sections, level, model.size_z, natural_pixels=True)
 
 
+class ImagenetBigBiGAN():
+    def __init__(self, level, device='cuda'):
+        from pytorch_pretrained_gans import make_gan
+        model = make_gan(gan_type='bigbigan')
+        model = model.eval().to(device)
+        self.model = model
+        self.generator = model.big_gan
+        self.level = level
+
+    def __call__(self, z):
+        x = self.model(z)
+        return (x + 1) / 2
+
+    def prepare(self, z):
+        classes = torch.zeros(z.shape[0], dtype=torch.int64, device=z.device)
+        y = self.generator.shared(classes)
+
+        # If hierarchical, concatenate zs and ys
+        if self.generator.hier:
+            zs = torch.split(z, self.generator.z_chunk_size, 1)
+            z = zs[0]
+            ys = [torch.cat([y, item], 1) for item in zs[1:]]
+        else:
+            ys = [y] * len(self.generator.blocks)
+        return ys, z
+
+    def encode(self, z):
+        # Prepare
+        self.ys, h = self.prepare(z)
+
+        # First linear layer
+        h = self.generator.linear(h)
+        h = h.view(h.size(0), -1, self.generator.bottom_width, self.generator.bottom_width)
+
+        for index, blocklist in enumerate(self.generator.blocks[:self.level]):
+            # Second inner loop in case block has multiple layers
+            for block in blocklist:
+                h = block(h, self.ys[index])
+        return h
+
+    def decode(self, h):
+        for index, blocklist in enumerate(self.generator.blocks[self.level:]):
+            # Second inner loop in case block has multiple layers
+            index = index + self.level
+            for block in blocklist:
+                h = block(h, self.ys[index])
+        x = torch.tanh(self.generator.output_layer(h))
+        return (x + 1) / 2
+
 
 class ClassifierBase(nn.Module):
     '''
@@ -344,3 +394,23 @@ class CifarClassifier(ClassifierBase):
     def __init__(self, device='cuda'):
         classifier = load_model(os.path.join(directory, 'runs', 'cifar10', 'cls-cifar'), device=device)
         super().__init__(classifier, natural_pixels=True)
+
+
+class EfficientNetClassifier(nn.Module):
+    '''
+    Pretrained Efficient net classifier.
+    '''
+    def __init__(self, device='cuda'):
+        from efficientnet_pytorch import EfficientNet
+        super().__init__()
+        self.classifier = EfficientNet.from_pretrained('efficientnet-b0')
+        self.classifier = self.classifier.eval().to(device)
+
+    def forward(self, x):
+        tfs = transforms.Compose([
+            transforms.Resize(224),
+            transforms.Normalize(
+                mean = [0.485, 0.456, 0.406],
+                std  = [0.229, 0.224, 0.225]),
+            ])
+        return self.classifier(tfs(x))
