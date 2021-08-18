@@ -215,6 +215,7 @@ class PenaltyMethod():
     ):
         # Defaults
         if rho is None:
+            # TODO prepsat. rostouci rho + n asi vetsi
             rho = {'scheduler': 'SchedulerStep', 'params': {'initial': 10e8, 'gamma': 1, 'n': 10 }}
         if xi is None:
             xi = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
@@ -287,6 +288,23 @@ class PenaltyMethod():
         '''
         Penalty method args: objective, constraint, x_init, hyperpars
         Penalization: rho * max(g(x), 0)^2, where rho is a penalization parameter
+
+        There is no guarantee that the final point is feasible.
+        '''
+        x = x_init.clone()
+
+        for t in range(iters):
+            l = lambda x: objective(x) + rho(t)*F.relu(constraint(x))**2
+            grad = calculate_gradients(l, x, norm=grad_norm)
+            x = x - xi(t)*grad
+        return x.detach()
+
+
+class CermakMethod(PenaltyMethod):
+    @staticmethod
+    def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
+        '''
+        Because Vojta does not believe me, he needs to have his own method.
         '''
         result = torch.full_like(x_init, float('nan'))
         x = x_init.clone()
@@ -307,3 +325,4 @@ class PenaltyMethod():
             if unchanged > max_unchanged:
                 break
         return result.detach()
+
