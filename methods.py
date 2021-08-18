@@ -94,9 +94,14 @@ def bisection_method(x0, x, model, threshold=1e-6):
 def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50):
     '''
     Similar to the HopSkip method, but with any distance metric as an objective.
-    Consider:
+
+    TODO better description
+    
+    TODO why is it done for each channel separately? -> @calculate_batch(variables=2)
+
+    TODO:
         - Do we even need to do the initial projection?
-        - Do we need normalise gradient in the projection step?
+        - Do we need to normalize gradient in the projection step?
     '''
     constraint = ConstraintMisclassify(x0, model)
     projection = ProjectionBinarySearch(constraint, threshold=0.001)
@@ -106,6 +111,7 @@ def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad
     grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
     x = projection(x, x - grad_objective)
 
+    # TODO chceme ty iterace takto?
     for t in range(iters):
         # Step in direction of constraint
         grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
@@ -121,10 +127,14 @@ def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad
 def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
     '''
     Penalty method with distance as objective and misclassification constraint. 
-    Penalty function: max(g(x), 0)^2
+    Penalization: rho * max(g(x), 0)^2, where rho is a penalization parameter
     '''
     constraint = ConstraintMisclassify(x0, model)
     result = torch.full_like(x0, float('nan'))
+
+    # TODO this seems to be wrong. where is the initialization?
+
+    # TODO check it later again
 
     x = x0.clone()
     unchanged = 0
@@ -146,6 +156,9 @@ def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_
 
 @calculate_batch(variables=2)
 def projected_gd_method(x0, x, distance, model, xi_o, xi_c, iters=100):
+    # TODO what is the difference from projection_method?
+
+    # TODO check it later
     constraint = ConstraintMisclassify(x0, model)
     projection = ProjectionBinarySearch(constraint, threshold=0.001)
     x = projection(x0, x)
@@ -167,6 +180,7 @@ def hopskip_method(x0, x, model, grad_norm='l2', iters=50):
     '''
     Method based on hopskip paper - optimizes squared l2 distance between x0 and x.
     '''
+    # TODO are we still using this?
     constraint = ConstraintMisclassify(x0, model)
     projection = ProjectionBinarySearch(constraint, threshold=0.001, inside=False)
     x = projection(x0, x)
@@ -184,7 +198,7 @@ def hopskip_method(x0, x, model, grad_norm='l2', iters=50):
         x = projection(x0, x)
     return x.detach()
 
-
+# TODO what are the wrapper methods good for?
 ###### Wrapped method
 def penalty_method_wrapped(
     x0,
