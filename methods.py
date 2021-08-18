@@ -95,9 +95,11 @@ def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad
     '''
     Similar to the HopSkip method, but with any distance metric as an objective.
 
-    TODO better description
-    
-    TODO why is it done for each channel separately? -> @calculate_batch(variables=2)
+    TODO rewrite as a general function -> args: objective, projection, x_init (x), hyperpars
+
+    TODO better description -> assumes that x0 and x have different classification
+
+    TODO what do we assume here?
 
     TODO:
         - Do we even need to do the initial projection?
@@ -132,9 +134,9 @@ def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_
     constraint = ConstraintMisclassify(x0, model)
     result = torch.full_like(x0, float('nan'))
 
-    # TODO this seems to be wrong. where is the initialization?
+    # TODO rewrite as a general function -> args: objective, projection, x_init (ted x0), hyperpars
 
-    # TODO check it later again
+    # TODO uplne prepsat
 
     x = x0.clone()
     unchanged = 0
@@ -154,51 +156,6 @@ def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_
             break
     return result.detach()
 
-@calculate_batch(variables=2)
-def projected_gd_method(x0, x, distance, model, xi_o, xi_c, iters=100):
-    # TODO what is the difference from projection_method?
-
-    # TODO check it later
-    constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001)
-    x = projection(x0, x)
-    for t in range(iters):
-        # Update objective
-        objective = lambda x: distance(x0, x)
-        grad_objective = calculate_gradients(objective, x, norm='l2')
-        x = x - xi_o(t)*grad_objective
-
-        # Project to feasible region
-        grad_constraint = calculate_gradients(constraint, x, norm='l2')
-        x = x - xi_c(t)*grad_constraint
-        x = projection(x0, x)
-    return x.detach()
-
-
-@calculate_batch(variables=2)
-def hopskip_method(x0, x, model, grad_norm='l2', iters=50):
-    '''
-    Method based on hopskip paper - optimizes squared l2 distance between x0 and x.
-    '''
-    # TODO are we still using this?
-    constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001, inside=False)
-    x = projection(x0, x)
-
-    for t in range(iters):
-        grad_constraint = calculate_gradients(constraint, x, norm=grad_norm)
-
-        # Xi selection
-        xi = torch.norm(x - x0, p=2) / np.sqrt(t+1)
-        while constraint(x - xi*grad_constraint) > 0:
-            xi = xi / 2
-
-        # Update and project
-        x = x - xi*grad_constraint
-        x = projection(x0, x)
-    return x.detach()
-
-# TODO what are the wrapper methods good for?
 ###### Wrapped method
 def penalty_method_wrapped(
     x0,
