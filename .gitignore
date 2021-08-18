@@ -9,3 +9,5 @@ notebooks/images*
 *.pickle
 *.csv
 *.pdf
+Pokus*
+pokus*
