@@ -90,136 +90,6 @@ def bisection_method(x0, x, model, threshold=1e-6):
     return projection(x0, x)
 
 
-@calculate_batch(variables=2)
-def projection_method(x0, x, distance, model, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50):
-    '''
-    Similar to the HopSkip method, but with any distance metric as an objective.
-
-    TODO rewrite as a general function -> args: objective, projection, x_init (x), hyperpars
-
-    TODO better description -> assumes that x0 and x have different classification
-
-    TODO what do we assume here?
-
-    TODO:
-        - Do we even need to do the initial projection?
-        - Do we need to normalize gradient in the projection step?
-    '''
-    constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=0.001)
-    objective = lambda x: distance(x0, x)
-
-    # Project in direction of min distance
-    grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-    x = projection(x, x - grad_objective)
-
-    # TODO chceme ty iterace takto?
-    for t in range(iters):
-        # Step in direction of constraint
-        grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
-        x = x - xi_c(t)*grad_constraint
-
-        # Project in direction of min distance
-        grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-        x = projection(x, x - xi_o(t)*grad_objective)
-    return x.detach()
-
-
-@calculate_batch(variables=1)
-def penalty_method(x0, distance, model, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
-    '''
-    Penalty method with distance as objective and misclassification constraint. 
-    Penalization: rho * max(g(x), 0)^2, where rho is a penalization parameter
-    '''
-    constraint = ConstraintMisclassify(x0, model)
-    result = torch.full_like(x0, float('nan'))
-
-    # TODO rewrite as a general function -> args: objective, projection, x_init (ted x0), hyperpars
-
-    # TODO uplne prepsat
-
-    x = x0.clone()
-    unchanged = 0
-    for t in range(iters):
-        # Optimization step
-        l = lambda x: distance(x0, x) + rho(t)*F.relu(constraint(x))**2
-        grad = calculate_gradients(l, x, norm=grad_norm)
-        x = x - xi(t)*grad
-
-        # Termination condition
-        if torch.sign(constraint(x)) > 0:
-            unchanged += 1
-        else:
-            unchanged = 0
-            result = x
-        if unchanged > max_unchanged:
-            break
-    return result.detach()
-
-###### Wrapped method
-def penalty_method_wrapped(
-    x0,
-    x,
-    classifier,
-    generator,
-    distance = 'l2',
-    distance_args = None,
-    iters = 100,
-    grad_norm = 'l2',
-    rho = None,
-    xi = None,
-):
-
-    if rho is None:
-        rho = {'scheduler': 'SchedulerStep', 'initial': 10e8, 'gamma': 1, 'n': 10}
-    if xi is None:
-        xi = {'scheduler': 'SchedulerExponential', 'initial': 1, 'gamma': 0.01}
-    rho = getattr(schedulers, rho.pop('scheduler'))(**rho)
-    xi = getattr(schedulers, xi.pop('scheduler'))(**xi)
-
-    if distance == 'l2':
-        transform = distances.Decoded(generator)
-        distance_function = distances.L2(transform)
-
-    if distance == 'wd':
-        transform = distances.DecodedDistribution(generator)
-        distance_function = distances.GeomLoss(SamplesLoss(**distance_args), transform)
-
-    return penalty_method(x0, distance_function, classifier, xi, rho, grad_norm, iters)
-
-
-def projection_method_wrapped(
-    x0,
-    x,
-    classifier,
-    generator,
-    distance = 'l2',
-    distance_args = None,
-    xi_c = None,
-    xi_o = None,
-    grad_norm_o = 'l2',
-    grad_norm_c = 'l2',
-    iters = 50
-):
-    if xi_c is None:
-        xi_c = {'scheduler': 'SchedulerPower', 'initial': 1, 'power': -0.5}
-    if xi_o is None:
-        xi_o = {'scheduler': 'SchedulerConstant','alpha': 1}
-
-    xi_c = getattr(schedulers, xi_c.pop('scheduler'))(**xi_c)
-    xi_o = getattr(schedulers, xi_o.pop('scheduler'))(**xi_o)
-
-    if distance == 'l2':
-        transform = distances.Decoded(generator)
-        distance_function = distances.L2(transform)
-
-    if distance == 'wd':
-        transform = distances.DecodedDistribution(generator)
-        distance_function = distances.GeomLoss(SamplesLoss(**distance_args), transform)
-
-    return projection_method(x0, x, distance_function, classifier, xi_c, xi_o, grad_norm_o, grad_norm_c, iters)
-
-
 class ProjectionMethod():
     def __init__(
         self,
@@ -231,6 +101,7 @@ class ProjectionMethod():
         grad_norm_o = 'l2',
         grad_norm_c = 'l2',
         iters = 100,
+        threshold = 1e-6
     ):
         # Defaults
         if xi_c is None:
@@ -246,6 +117,7 @@ class ProjectionMethod():
         self.grad_norm_o = grad_norm_o
         self.grad_norm_c = grad_norm_c
         self.iters = iters
+        self.threshold = threshold
 
     def get_params(self):
         return {
@@ -257,6 +129,7 @@ class ProjectionMethod():
             'grad_norm_c': self.grad_norm_c,
             'grad_norm_o': self.grad_norm_o,
             'iters': self.iters,
+            'threshold': self.threshold,
         }.copy()
 
     def __call__(self, x0, x, classifier, generator):
@@ -293,36 +166,32 @@ class ProjectionMethod():
                 xi_o = xi_o,
                 grad_norm_c = self.grad_norm_c,
                 grad_norm_o = self.grad_norm_o,
-                iters = self.iters
+                iters = self.iters,
+                threshold = self.threshold
             )
             data.append(result)
         return torch.cat(data)
     
     @staticmethod
-    def method(objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50):
+    def method(objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50, threshold=1e-6):
         '''
-        Similar to the HopSkip method, but with any distance metric as an objective.
+        Projected gradient method. The initial point x_init must be feasible constraint(x_init) <= 0.
 
-        TODO rewrite as a general function -> args: objective, projection, x_init (x), hyperpars
+        It alternates between bouncing off the boundary, decreasing the objective and potential projecting unfeasible points to the feasibile region.
 
-        TODO better description -> assumes that x0 and x have different classification
-
-        TODO what do we assume here?
-
-        TODO:
-            - Do we even need to do the initial projection?
-            - Do we need to normalize gradient in the projection step?
+        All iterations are feasible (unless the projection fails).
         '''
         x = x_init.clone()
-        projection = ProjectionBinarySearch(constraint, threshold=0.001)
+        projection = ProjectionBinarySearch(constraint, threshold=threshold)
 
         # Project in direction of min distance
         grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-        x = projection(x, x - grad_objective)
+        x = projection(x, x - xi_o(0)*grad_objective)
 
         # TODO chceme ty iterace takto?
         for t in range(iters):
             # Step in direction of constraint
+            # TODO skip if x - grad_objective is projected to x
             grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
             x = x - xi_c(t)*grad_constraint
 
