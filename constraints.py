@@ -33,15 +33,42 @@ class ConstraintMisclassify(Constraint):
             y = self.y[subset]
         else:
             y = self.y
-
         if x.shape[0] != y.shape[0]:
             raise ValueError('x and subset of x0 have different batch size.')
-
         prediction = self.model(x)
-        # TODO there should be a check that prediction has at most two dimensions
         if self.softmax:
             prediction = F.softmax(prediction, 1)
-        return -self.margin(prediction, y) # TODO + tol
+        return -self.margin(prediction, y)
+
+
+class ConstraintClassifyTarget(Constraint):
+    '''
+    Target class y must be predicted.
+
+    prediction = softmax(model(x))
+    max_{i not y}(prediction[i]) >= prediction[y]
+
+    g(x) := Margin(prediction, y) <= 0
+    '''
+
+    def __init__(self, y, model, softmax=True):
+        super().__init__()
+        self.margin = Margin()
+        self.y = y
+        self.model = model
+        self.softmax = softmax
+
+    def forward(self, x, subset=None):
+        if subset is not None:
+            y = self.y[subset]
+        else:
+            y = self.y
+        if x.shape[0] != y.shape[0]:
+            raise ValueError('x and subset of x0 have different batch size.')
+        prediction = self.model(x)
+        if self.softmax:
+            prediction = F.softmax(prediction, 1)
+        return self.margin(prediction, y)
 
 
 class ConstraintDistance(Constraint):
