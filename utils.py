@@ -7,6 +7,12 @@ from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 import importlib
 
+def fix_seed(seed=1):
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+
 def grid_plot(img_batch, save_as=None, nrows=6, already_grid=False, figsize=None):
     '''
     Plot tensor batch of images. Input dimension format: (B,C,W,H)
