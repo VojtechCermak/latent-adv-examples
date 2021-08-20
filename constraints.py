@@ -41,7 +41,7 @@ class ConstraintMisclassify(Constraint):
         # TODO there should be a check that prediction has at most two dimensions
         if self.softmax:
             prediction = F.softmax(prediction, 1)
-        return -self.margin(prediction, y)
+        return -self.margin(prediction, y) # TODO + tol
 
 
 class ConstraintDistance(Constraint):
