@@ -5,7 +5,7 @@ import numpy as np
 from projections import ProjectionLinf
 from projections import ProjectionBinarySearch
 from objectives import Objective
-from constraints import ConstraintMisclassify
+from constraints import ConstraintMisclassify, ConstraintClassifyTarget
 from geomloss import SamplesLoss
 import schedulers
 import distances
@@ -90,201 +90,111 @@ def bisection_method(x0, x, model, threshold=1e-6):
     return projection(x0, x)
 
 
-class ProjectionMethod():
-    def __init__(
-        self,
-        distance = 'l2',
-        distance_args = None,
-        constraint = 'misclassify',
-        xi_c = None,
-        xi_o = None,
-        grad_norm_o = 'l2',
-        grad_norm_c = 'l2',
-        iters = 100,
-        threshold = 1e-6
-    ):
-        # Defaults
-        if xi_c is None:
-            xi_c = {'scheduler': 'SchedulerPower', 'params': {'initial': 1, 'power': -0.5}}
-        if xi_o is None:
-            xi_o = {'scheduler': 'SchedulerConstant', 'params': {'alpha': 1}}
-
+class BaseMethod():
+    def __init__(self, distance, distance_args, constraint):
+        if distance_args is None:
+            distance_args = {}
         self.distance = distance
         self.distance_args = distance_args
         self.constraint = constraint
-        self.xi_o = xi_o
-        self.xi_c = xi_c
-        self.grad_norm_o = grad_norm_o
-        self.grad_norm_c = grad_norm_c
-        self.iters = iters
-        self.threshold = threshold
 
-    def get_params(self):
-        return {
-            'distance': self.distance,
-            'distance_args': self.distance_args,
-            'constraint': self.constraint,
-            'xi_c': self.xi_c,
-            'xi_o': self.xi_o,
-            'grad_norm_c': self.grad_norm_c,
-            'grad_norm_o': self.grad_norm_o,
-            'iters': self.iters,
-            'threshold': self.threshold,
-        }.copy()
+    @staticmethod
+    def method(self, *args, **kwargs):
+        raise NotImplementedError()
 
-    def __call__(self, x0, x, classifier, generator):
-        xi_c = getattr(schedulers, self.xi_c['scheduler'])(**self.xi_c['params'])
-        xi_o = getattr(schedulers, self.xi_o['scheduler'])(**self.xi_o['params'])
+    def __call__(self, x0, x_init, classifier, generator, target):
+        distance = self.parse_distance(generator)
 
-        # Parse objective
-        if self.distance == 'l2':
-            transform = distances.Decoded(generator)
-            distance = distances.L2(transform)
-        elif self.distance == 'wd':
-            transform = distances.DecodedDistribution(generator)
-            distance = distances.GeomLoss(SamplesLoss(**self.distance_args), transform)
-        else:
-            raise ValueError('Invalid distance')
-
-        # Parse constraints
-        if self.constraint == 'misclassify':
-            constraint_class = ConstraintMisclassify
-        else:
-            raise ValueError('Invalid constraint')
-
-        # Iterate over batch
         batch_size = x0.shape[0]
         data = []
         for i in range(batch_size):
             objective = lambda x: distance(x0[[i]], x)
-            constraint = constraint_class(x0[[i]], classifier)
-            result = self.method(
-                objective = objective,
-                constraint = constraint,
-                x_init = x[[i]],
-                xi_c = xi_c,
-                xi_o = xi_o,
-                grad_norm_c = self.grad_norm_c,
-                grad_norm_o = self.grad_norm_o,
-                iters = self.iters,
-                threshold = self.threshold
-            )
+            constraint = self.parse_constraint(classifier, x0, target, subset=[i])
+            result = self.method(objective, constraint, x_init = x_init[[i]], **self.params)
             data.append(result)
         return torch.cat(data)
-    
-    @staticmethod
-    def method(objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50, threshold=1e-6):
+
+    def __repr__(self):
+        return str(self.__class__.__name__)
+
+    def parse_distance(self, generator):
         '''
-        Projected gradient method. The initial point x_init must be feasible constraint(x_init) <= 0.
-
-        It alternates between bouncing off the boundary, decreasing the objective and potential projecting unfeasible points to the feasibile region.
-
-        All iterations are feasible (unless the projection fails).
+        Parse distance function based on self.distance and self.distance_args.
         '''
-        x = x_init.clone()
-        projection = ProjectionBinarySearch(constraint, threshold=threshold)
+        if self.distance == 'l2':
+            if generator is None:
+                distance = distances.L2()
+            else:
+                transform = distances.Decoded(generator)
+                distance = distances.L2(transform)
 
-        # Project in direction of min distance
-        grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-        x = projection(x, x - xi_o(0)*grad_objective)
+        elif self.distance == 'wd':
+            if generator is None:
+                distance = distances.GeomLoss(SamplesLoss(**self.distance_args))
+            else:
+                transform = distances.DecodedDistribution(generator)
+                distance = distances.GeomLoss(SamplesLoss(**self.distance_args), transform)
 
-        # TODO chceme ty iterace takto?
-        for t in range(iters):
-            # Step in direction of constraint
-            # TODO skip if x - grad_objective is projected to x
-            grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
-            x = x - xi_c(t)*grad_constraint
+        else:
+            raise ValueError('Invalid distance.')
+        return distance
 
-            # Project in the direction of objective
-            grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-            x = projection(x, x - xi_o(t)*grad_objective)
-        return x.detach()
+    def parse_constraint(self, classifier, x0, target, subset=None):
+        '''
+        Parse constraint function based on self.constraint.
+        '''
+        if subset is None:
+            subset = slice(None)
+
+        if self.constraint == 'misclassify':
+            constraint = ConstraintMisclassify(x0[subset], classifier)
+
+        elif self.constraint == 'targeted':
+            if target is None:
+                raise ValueError("Targeted attack should have valid target.")
+            constraint = ConstraintClassifyTarget(target[subset], classifier)
+
+        else:
+            raise ValueError('Invalid constraint.')
+        return constraint
+
+    def parse_scheduler(self, dictionary):
+        scheduler_class = getattr(schedulers, dictionary['scheduler'])
+        scheduler = scheduler_class(**dictionary['params'])
+        return scheduler
 
 
-class PenaltyMethod():
+class PenaltyMethod(BaseMethod):
     def __init__(
         self,
         distance = 'l2',
         distance_args = None,
         constraint = 'misclassify',
         rho = None,
-        xi = None,
-        grad_norm = 'l2',
+        xi  = None,
         iters = 100,
-        max_unchanged = 10
+        grad_norm = 'l2',
     ):
-        # Defaults
-        if rho is None:
-            # TODO prepsat. rostouci rho + n asi vetsi
+        super().__init__(distance, distance_args, constraint)
+        if rho is None: # TODO prepsat. rostouci rho + n asi vetsi
             rho = {'scheduler': 'SchedulerStep', 'params': {'initial': 10e8, 'gamma': 1, 'n': 10 }}
         if xi is None:
-            xi = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
+            xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
 
-        self.distance = distance
-        self.distance_args = distance_args
-        self.constraint = constraint
-        self.rho = rho
-        self.xi = xi
-        self.grad_norm = grad_norm
-        self.iters = iters
-        self.max_unchanged = max_unchanged
+        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params = {
+            'rho': self.parse_scheduler(rho),
+            'xi' : self.parse_scheduler(xi),
+            'iters': iters,
+            'grad_norm': grad_norm,
+        }
 
-
-    def get_params(self):
-        return {
-            'distance': self.distance,
-            'distance_args': self.distance_args,
-            'constraint': self.constraint,
-            'rho': self.rho,
-            'xi': self.xi,
-            'grad_norm': self.grad_norm,
-            'iters': self.iters,
-            'max_unchanged': self.max_unchanged,
-        }.copy()
-
-
-    def __call__(self, x0, classifier, generator):
-        # Parse schedulers
-        rho = getattr(schedulers, self.rho['scheduler'])(**self.rho['params'])
-        xi = getattr(schedulers, self.xi['scheduler'])(**self.xi['params'])
-
-        # Parse objective
-        if self.distance == 'l2':
-            transform = distances.Decoded(generator)
-            distance = distances.L2(transform)
-        elif self.distance == 'wd':
-            transform = distances.DecodedDistribution(generator)
-            distance = distances.GeomLoss(SamplesLoss(**self.distance_args), transform)
-        else:
-            raise ValueError('Invalid distance')
-
-        # Parse constraints
-        if self.constraint == 'misclassify':
-            constraint_class = ConstraintMisclassify
-        else:
-            raise ValueError('Invalid constraint')
-
-        # Iterate over batch
-        batch_size = x0.shape[0]
-        data = []
-        for i in range(batch_size):
-            objective = lambda x: distance(x0[[i]], x)
-            constraint = constraint_class(x0[[i]], classifier)
-            result = self.method(
-                objective = objective,
-                constraint = constraint,
-                x_init = x0[[i]],
-                xi = xi,
-                rho = rho,
-                grad_norm = self.grad_norm,
-                iters = self.iters,
-                max_unchanged = self.max_unchanged)
-            data.append(result)
-        return torch.cat(data)
-
+    def __call__(self, x0, classifier, generator, target=None, **kwargs):
+        x_init = x0
+        return super().__call__(x0, x_init, classifier, generator, target)
 
     @staticmethod
-    def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
+    def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100):
         '''
         Penalty method args: objective, constraint, x_init, hyperpars
         Penalization: rho * max(g(x), 0)^2, where rho is a penalization parameter
@@ -299,8 +209,38 @@ class PenaltyMethod():
             x = x - xi(t)*grad
         return x.detach()
 
+    
+class PenaltyPopMethod(BaseMethod):
+    def __init__(
+        self,
+        distance = 'l2',
+        distance_args = None,
+        constraint = 'misclassify',
+        rho = None,
+        xi  = None,
+        iters = 100,
+        grad_norm = 'l2',
+        max_unchanged = 10
+    ):
+        if rho is None:
+            rho = {'scheduler': 'SchedulerStep', 'params': {'initial': 10e8, 'gamma': 1, 'n': 10 }}
+        if xi is None:
+            xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
 
-class CermakMethod(PenaltyMethod):
+        super().__init__(distance, distance_args, constraint)
+        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params = {
+            'rho': self.parse_scheduler(rho),
+            'xi' : self.parse_scheduler(xi),
+            'iters': iters,
+            'grad_norm': grad_norm,
+            'max_unchanged': max_unchanged
+        }
+
+    def __call__(self, x0, classifier, generator, target=None, **kwargs):
+        x_init = x0
+        return super().__call__(x0, x_init, classifier, generator, target)
+        
     @staticmethod
     def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
         '''
@@ -325,4 +265,64 @@ class CermakMethod(PenaltyMethod):
             if unchanged > max_unchanged:
                 break
         return result.detach()
+    
+    
+class ProjectionMethod(BaseMethod):
+    def __init__(
+        self,
+        distance = 'l2',
+        distance_args = None,
+        constraint = 'misclassify',
+        xi_c = None,
+        xi_o = None,
+        iters = 100,
+        grad_norm_o = 'l2',
+        grad_norm_c = 'l2',
+        threshold = 1e-3,
+    ):
+        super().__init__(distance, distance_args, constraint)
+        if xi_c is None:
+            xi_c = {'scheduler': 'SchedulerPower', 'params': {'initial': 1, 'power': -0.5}}
+        if xi_o is None:
+            xi_o = {'scheduler': 'SchedulerConstant', 'params': {'alpha': 1}}
+
+        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params = {
+            'xi_c': self.parse_scheduler(xi_c),
+            'xi_o': self.parse_scheduler(xi_o),
+            'iters': iters,
+            'grad_norm_o': grad_norm_o,
+            'grad_norm_c': grad_norm_c,
+            'threshold': threshold,
+        }
+
+    def __call__(self, x0, x_init, classifier, generator, target=None, **kwargs):
+        return super().__call__(x0, x_init, classifier, generator, target)
+
+    @staticmethod
+    def method(objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50, threshold=1e-3):
+        '''
+        Projected gradient method. The initial point x_init must be feasible constraint(x_init) <= 0.
+
+        It alternates between bouncing off the boundary, decreasing the objective and potential projecting
+        unfeasible points to the feasibile region. All iterations are feasible (unless the projection fails).
+        '''
+        x = x_init.clone()
+        projection = ProjectionBinarySearch(constraint, threshold=threshold)
+
+        # Project in direction of min distance
+        grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
+        x = projection(x, x - xi_o(0)*grad_objective)
+
+        # TODO chceme ty iterace takto?
+        for t in range(iters):
+            # Step in direction of constraint
+            # TODO skip if x - grad_objective is projected to x
+            grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
+            x = x - xi_c(t)*grad_constraint
+
+            # Project in the direction of objective
+            grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
+            x = projection(x, x - xi_o(t)*grad_objective)
+        return x.detach()
 
