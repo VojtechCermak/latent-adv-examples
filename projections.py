@@ -78,15 +78,18 @@ class ProjectionBinarySearch(nn.Module):
         batch_size = x.shape[0]
         results = []
         for i in range(batch_size):
+            one_x0 = x0[i].unsqueeze(0)
+            one_x = x[i].unsqueeze(0)
             try:
-                one_x0 = x0[i].unsqueeze(0)
-                one_x = x[i].unsqueeze(0)
+                if one_x.isnan().any() or one_x.isnan().any():
+                    raise ConvergenceError('All nans')
+
                 f = lambda c: self.constraint(self.combine(one_x0, one_x, c), subset=[i])                
                 c = self.binary_search_negative(f, 0, 1, self.threshold, self.max_steps)
                 projected = self.combine(one_x0, one_x, c)
             except ConvergenceError as e:
-                print(e)
-                projected = torch.full_like(x, float('nan'))
+                #print(e)
+                projected = torch.full_like(one_x, float('nan'))
             results.append(projected)
         return torch.cat(results)
 
