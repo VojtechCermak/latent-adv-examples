@@ -1,0 +1,147 @@
+[
+    {
+        "generator": "mnist-ali",
+        "generator_level": "full",
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": "full",
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 0,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 0,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 1,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 1,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 3,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 3,
+        "classifier": "madry-robust",
+        "method": "penalty_pop",
+        "params": {
+            "iters": 1000,
+            "max_unchanged": 10,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e8, "gamma": 1, "n": 10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 1, "gamma": 0.01}}
+        }
+    }
+]

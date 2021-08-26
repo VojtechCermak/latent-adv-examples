@@ -36,6 +36,7 @@ class DecodedDistribution(Decoded):
     '''
     def forward(self, z):
         x = self.decoder.decode(z)
+        # TODO why do we have 1e-8 here?
         x[x<=0] = 1e-8
         return x / x.norm(1, dim=(2, 3), keepdim=True)
 
@@ -53,7 +54,7 @@ class Distance(nn.Module):
 
 class L2(Distance):
     '''
-    Euklidean distance
+    Euclidean distance
     '''
     def forward(self, a, b):
         return torch.norm((self.G(a) - self.G(b)), 2, dim=tuple(range(1, a.ndim)))
@@ -61,16 +62,16 @@ class L2(Distance):
 
 class SquaredL2(Distance):
     '''
-    Squared Euklidean distance
+    Squared Euclidean distance
     '''
     def forward(self, a, b):
-        return torch.sum((self.G(a) - self.G(b))**2)
+        return torch.sum((self.G(a) - self.G(b))**2, dim=tuple(range(1, a.ndim)))
 
 
 class GeomLoss(Distance):
     '''
-    Calculates distance from geomloss library between two BCHW samples.
-    Final distance is sum of distances in each channel.
+    Calculates distance from the geomloss library between two BCHW samples.
+    Final distance is the sum of distances in each channel.
     '''
     def __init__(self, loss_function, transform=None):
         super().__init__(transform)

@@ -56,3 +56,16 @@ class SchedulerStep(Scheduler):
 
     def __call__(self, i):
         return self.initial * np.power(2, -self.gamma*np.floor((1/self.n)*i))
+
+
+class SchedulerLinearStep(Scheduler):
+    '''
+    Decrease step every n steps by step_size.
+    '''
+    def __init__(self, initial=0.0, step_size=1.0, n=1.0):
+        self.initial = initial
+        self.step_size = step_size
+        self.n = n
+
+    def __call__(self, i):
+        return self.initial + self.step_size * np.floor((1/self.n)*i)

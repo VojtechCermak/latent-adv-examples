@@ -1,9 +1,18 @@
 runs/
 __pycache__/
 literature/
+experiments/results/images*
+notebooks/images*
 .ipynb_checkpoints/
 
 
 *.pickle
 *.csv
 *.pdf
+Pokus*
+pokus*
+
+*.png
+*.jpg
+*.jpeg
+*.npy
