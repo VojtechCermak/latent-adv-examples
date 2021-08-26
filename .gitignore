@@ -11,3 +11,8 @@ notebooks/images*
 *.pdf
 Pokus*
 pokus*
+
+*.png
+*.jpg
+*.jpeg
+*.npy
