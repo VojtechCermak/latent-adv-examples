@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import torch
@@ -6,7 +7,7 @@ import argparse
 from datetime import datetime
 
 sys.path.insert(0, "../")
-from utils import sample_grid
+from utils import sample_grid, fix_seed
 from models import pretrained
 import methods
 
@@ -17,7 +18,6 @@ classifiers = {
     'madry-natural': pretrained.MnistMadryNatural,
     'svhn-cls':      pretrained.SvhnClassifier,
     'cifar-cls':     pretrained.CifarClassifier,
-    #TODO:'imagenet-efficientnet-128'
 }
 
 generators = {
@@ -29,12 +29,12 @@ generators = {
     'svhn-vae':    pretrained.SvhnVAE,
     'cifar-ali':   pretrained.CifarALI,
     'cifar-dcgan': pretrained.CifarDCGAN,
-    #TODO:'imagenet-bigbigan-128'
 }
 
 attacks = {
-    'penalty':    methods.penalty_method_wrapped,
-    'projection': methods.projection_method_wrapped,
+    'penalty_pop': methods.PenaltyPopMethod,
+    'penalty':     methods.PenaltyMethod,
+    'projection':  methods.ProjectionMethod,
 }
 
 if __name__ == "__main__":
@@ -48,12 +48,13 @@ if __name__ == "__main__":
     parser.add_argument('-sampler_max_steps', dest="sampler_max_steps", type=int, default=200)
     parser.add_argument('-sampler_threshold', dest="sampler_threshold",  type=float, default=0.99)
     args = parser.parse_args()
+    fix_seed(args.seed)
 
-    # Reproducibility
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
+    # Create output folder
+    name = args.path_input.split('/')[-1].split('.')[0]
+    folder = os.path.join(args.path_output, name)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     params_sampler = {
         'threshold':  args.sampler_threshold,
@@ -65,11 +66,10 @@ if __name__ == "__main__":
     with open(args.path_input) as json_file:
         experiments = json.load(json_file)
 
-    file_data = []
     for i, experiment in enumerate(experiments):
         construct_generator = generators[experiment['generator']]
+        method = attacks[experiment['method']](**experiment['params'])
         classifier = classifiers[experiment['classifier']]()
-        method = attacks[experiment['method']]
         
         # Construct latent vectors z
         z0, z, labels = sample_grid(classifier, construct_generator('full'), device='cuda', no_classes=10)
@@ -79,7 +79,8 @@ if __name__ == "__main__":
         # Construct latent vectors v
         v0 = generator.encode(z0)
         v = generator.encode(z)
-        v_per = method(v0, v, combined, generator, **experiment['params'])
+        target = combined(v).argmax(1)
+        v_per = method(x0=v0, x_init=v, classifier=combined, generator=generator, target=target)
 
         # Collect results
         x0 = generator.decode(v0)
@@ -89,20 +90,20 @@ if __name__ == "__main__":
         x_per[~have_nan] = generator.decode(v_per[~have_nan])
 
         data = {
-            'meta':  experiment,
-            'args':  vars(args),
-            'z0':    z0.cpu().detach().numpy(),
-            'z':     z.cpu().detach().numpy(),
-            'x0':    x0.cpu().detach().numpy(),
-            'x':     x.cpu().detach().numpy(),
-            'x_per': x_per.cpu().detach().numpy(),
+            'script': vars(args),
+            'params': method.params_all,
+            'json':   experiment,
+            'z0':     z0.cpu().detach().numpy(),
+            'z':      z.cpu().detach().numpy(),
+            'x0':     x0.cpu().detach().numpy(),
+            'x':      x.cpu().detach().numpy(),
+            'x_per':  x_per.cpu().detach().numpy(),
         }
-        file_data.append(data)
+
+        # Save results
+        time = datetime.now().strftime('%b%d-%H-%M-%S')
+        file =  os.path.join(folder, f"{name}_{i}_{time}.pickle")
+        with open(file, 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         print(f'Part {i} done')
-
-    time = datetime.now().strftime('%b%d-%H-%M-%S')
-    name = args.path_input.split('/')[-1].split('.')[0]
-    file_name = args.path_output + '/' + f'{name}_{time}' + '.pickle'
-
-    with open(file_name, 'wb') as handle:
-        pickle.dump(file_data, handle, protocol=pickle.HIGHEST_PROTOCOL)  
