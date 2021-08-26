@@ -27,7 +27,7 @@ class ImageDataset(Dataset):
 
     def find_imgs(self, folder):
         imgs = []
-        valid_images = [".jpg",".gif",".png",".tga"]
+        valid_images = [".jpg",".gif",".png",".tga", ".jpeg"]
         for f in os.listdir(folder):
             ext = os.path.splitext(f)[1]
             if ext.lower() not in valid_images:
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', dest="folder", help = 'path to folder with images', required=True)
     parser.add_argument('-batch_size', dest="batch_size", type=int, default=16)
+    parser.add_argument('-model', dest="model", default="resnet")
     args = parser.parse_args()
 
     # Create output folder
@@ -71,8 +72,15 @@ if __name__ == "__main__":
     if not os.path.exists(folder):
         os.makedirs(folder)
 
+    print('Loading BigBiGAN model')
+    if args.model == "resnet":
+        module = hub.Module('https://tfhub.dev/deepmind/bigbigan-resnet50/1')
+    elif args.model == "revnet":
+        module = hub.Module('https://tfhub.dev/deepmind/bigbigan-revnet50x4/1')
+    else:
+        raise ValueError('Invalid model')
+
     print('Initializing BigBiGAN model')
-    module = hub.Module('https://tfhub.dev/deepmind/bigbigan-resnet50/1')
     init = tf.global_variables_initializer()
     sess = tf.Session()
     sess.run(init)
