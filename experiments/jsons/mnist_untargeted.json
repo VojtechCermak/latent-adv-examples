@@ -1,0 +1,147 @@
+[
+    {
+        "generator": "mnist-ali",
+        "generator_level": "full",
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": "full",
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 0,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 0,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 1,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 1,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 3,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    },
+    {
+        "generator": "mnist-ali",
+        "generator_level": 3,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 150,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerPower", "params": {"initial": 1, "power": -0.5}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 0.001
+        }
+    }
+]

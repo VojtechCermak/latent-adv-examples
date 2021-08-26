@@ -1,0 +1,91 @@
+[    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 2,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 15,
+            "max_unchanged": 5
+        }
+    },
+    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 0,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 1500,
+            "max_unchanged": 100
+        }
+    },
+    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 1,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 1500,
+            "max_unchanged": 100
+        }
+    },
+    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 2,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 1500,
+            "max_unchanged": 100
+        }
+    },
+    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 3,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 1500,
+            "max_unchanged": 100
+        }
+    },
+    {
+        "classifier": "imagenet-effnet",
+        "generator":  "imagenet-bigbigan",
+        "generator_level": 4,
+        "method": "penalty_pop",
+        "targets": [937, 950, 555],
+        "params": {
+            "distance": "l2",
+            "constraint": "targeted",
+            "rho": {"scheduler": "SchedulerStep", "params": {"initial": 10e10, "gamma": 1, "n":10}},
+            "xi": {"scheduler": "SchedulerExponential", "params": {"initial": 0.5, "gamma": 0.01}},
+            "iters": 1500,
+            "max_unchanged": 100
+        }
+    }
+]
