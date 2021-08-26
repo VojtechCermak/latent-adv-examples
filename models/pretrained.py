@@ -312,6 +312,10 @@ class ImagenetBigBiGAN():
         return ys, z
 
     def encode(self, z):
+        '''
+        Caveat: due to hierarchical structure of z, some parts of z are stored in self.ys attribute.
+        As results, decode can be used only on the currently encoded z.
+        '''
         # Prepare
         self.ys, h = self.prepare(z)
 
