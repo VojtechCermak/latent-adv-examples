@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from projections import ProjectionLinf
+from projections import ConvergenceError, ProjectionLinf
 from projections import ProjectionBinarySearch
 from objectives import Objective
 from constraints import ConstraintMisclassify, ConstraintClassifyTarget
@@ -266,7 +266,7 @@ class PenaltyPopMethod(BaseMethod):
                 break
         return result.detach()
     
-    
+
 class ProjectionMethod(BaseMethod):
     def __init__(
         self,
@@ -312,17 +312,31 @@ class ProjectionMethod(BaseMethod):
 
         # Project in direction of min distance
         grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-        x = projection(x, x - xi_o(0)*grad_objective)
+        x_next = x - xi_o(0)*grad_objective
+        x = projection(x, x_next)
 
         # TODO chceme ty iterace takto?
         for t in range(iters):
             # Step in direction of constraint
-            # TODO skip if x - grad_objective is projected to x
-            grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
-            x = x - xi_c(t)*grad_constraint
+            if not (x_next == x).all().item():
+                grad_constraint = calculate_gradients(constraint, x, norm=grad_norm_c)
+
+                lr = xi_c(t)
+                converged = False
+                for _ in range(100):
+                    if constraint(x - lr*grad_constraint) < 0 :
+                        converged = True
+                        break
+                    else:
+                        print('Invalid step... correcting')
+                        lr = lr / 2
+                if not converged:
+                    raise ConvergenceError("Step correction is in infinite cycle")
+                x = x - lr*grad_constraint
 
             # Project in the direction of objective
             grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
-            x = projection(x, x - xi_o(t)*grad_objective)
+            x_next = x - xi_o(0)*grad_objective
+            x = projection(x, x_next)
         return x.detach()
 
