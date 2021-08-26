@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser.add_argument('-sampler_max_steps', dest="sampler_max_steps", type=int, default=200)
     parser.add_argument('-sampler_threshold', dest="sampler_threshold",  type=float, default=0.99)
     args = parser.parse_args()
-    fix_seed(args.seed)
+    
 
     # Create output folder
     name = args.path_input.split('/')[-1].split('.')[0]
@@ -67,10 +67,11 @@ if __name__ == "__main__":
         experiments = json.load(json_file)
 
     for i, experiment in enumerate(experiments):
+        fix_seed(args.seed)
         construct_generator = generators[experiment['generator']]
         method = attacks[experiment['method']](**experiment['params'])
         classifier = classifiers[experiment['classifier']]()
-        
+
         # Construct latent vectors z
         z0, z, labels = sample_grid(classifier, construct_generator('full'), device='cuda', no_classes=10)
         generator = construct_generator(experiment['generator_level'])
