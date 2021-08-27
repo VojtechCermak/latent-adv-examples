@@ -69,6 +69,7 @@ if __name__ == "__main__":
 
     for i, experiment in enumerate(experiments):
         fix_seed(args.seed)
+        start = datetime.now()
         construct_generator = generators[experiment['generator']]
         method = attacks[experiment['method']](**experiment['params'])
         classifier = classifiers[experiment['classifier']]()
@@ -92,6 +93,7 @@ if __name__ == "__main__":
         x_per[~have_nan] = generator.decode(v_per[~have_nan])
 
         data = {
+            'time':   str(datetime.now() - start),
             'script': vars(args),
             'params': method.params_all,
             'json':   experiment,
