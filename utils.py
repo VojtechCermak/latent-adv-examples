@@ -120,3 +120,21 @@ def sample_grid(classifier, generator, device, no_classes=10):
 
     labels = torch.tensor(np.repeat(np.arange(no_classes), no_classes-1), dtype=torch.long, device=device)
     return data_a, data_b, labels
+
+
+def sample_subset(classifier, generator, no_samples, device='cuda', no_classes=10):
+    assert no_samples <= no_classes
+    data_a = []
+    data_b = []
+    for a in range(no_classes):
+        data_a.append(class_sampler(classifier, generator, a, samples=no_samples, threshold=0.99, device=device))
+
+        valid_b = list(set(range(no_classes)) - {a})[:no_samples]
+        for b in valid_b:
+            if a != b:
+                data_b.append(class_sampler(classifier, generator, b, samples=1, threshold=0.99, device=device))
+    data_a = torch.cat(data_a)
+    data_b = torch.cat(data_b)
+
+    labels = torch.tensor(np.repeat(np.arange(no_classes), no_classes-1), dtype=torch.long, device=device)
+    return data_a, data_b, labels

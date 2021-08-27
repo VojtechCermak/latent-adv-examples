@@ -7,7 +7,7 @@ import argparse
 from datetime import datetime
 
 sys.path.insert(0, "../")
-from utils import sample_grid, fix_seed
+from utils import sample_subset, sample_grid, fix_seed
 from models import pretrained
 import methods
 
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument('-classes', dest="no_classes", help = 'number of samples per class', type=int, default=10)
     parser.add_argument('-device', dest="device", default='cuda')
     parser.add_argument('-seed', dest="seed", type=int, default=1)
+    parser.add_argument('-subset', dest="subset", type=int, default=9)
     parser.add_argument('-sampler_batch_size', dest="sampler_batch_size", type=int, default=32)
     parser.add_argument('-sampler_max_steps', dest="sampler_max_steps", type=int, default=200)
     parser.add_argument('-sampler_threshold', dest="sampler_threshold",  type=float, default=0.99)
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         classifier = classifiers[experiment['classifier']]()
 
         # Construct latent vectors z
-        z0, z, labels = sample_grid(classifier, construct_generator('full'), device='cuda', no_classes=10)
+        z0, z, labels = sample_subset(classifier, construct_generator('full'), no_samples=args.subset, device='cuda', no_classes=10)
         generator = construct_generator(experiment['generator_level'])
         combined = lambda z: classifier(generator.decode(z))
 
