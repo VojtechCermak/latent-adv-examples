@@ -98,7 +98,6 @@ class BaseMethod():
         self.distance_args = distance_args
         self.constraint = constraint
 
-    @staticmethod
     def method(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -181,7 +180,7 @@ class PenaltyMethod(BaseMethod):
         if xi is None:
             xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
 
-        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params_all = {str(k): str(v) for k, v in locals().items() if k not in ["__class__"]}
         self.params = {
             'rho': self.parse_scheduler(rho),
             'xi' : self.parse_scheduler(xi),
@@ -193,8 +192,7 @@ class PenaltyMethod(BaseMethod):
         x_init = x0
         return super().__call__(x0, x_init, classifier, generator, target)
 
-    @staticmethod
-    def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100):
+    def method(self, objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100):
         '''
         Penalty method args: objective, constraint, x_init, hyperpars
         Penalization: rho * max(g(x), 0)^2, where rho is a penalization parameter
@@ -241,8 +239,7 @@ class PenaltyPopMethod(BaseMethod):
         x_init = x0
         return super().__call__(x0, x_init, classifier, generator, target)
         
-    @staticmethod
-    def method(objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
+    def method(self, objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
         '''
         Because Vojta does not believe me, he needs to have his own method.
         '''
@@ -299,8 +296,7 @@ class ProjectionMethod(BaseMethod):
     def __call__(self, x0, x_init, classifier, generator, target=None, **kwargs):
         return super().__call__(x0, x_init, classifier, generator, target)
 
-    @staticmethod
-    def method(objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50, threshold=1e-3):
+    def method(self, objective, constraint, x_init, xi_c, xi_o, grad_norm_o='l2', grad_norm_c='l2', iters=50, threshold=1e-3):
         '''
         Projected gradient method. The initial point x_init must be feasible constraint(x_init) <= 0.
 
@@ -314,7 +310,6 @@ class ProjectionMethod(BaseMethod):
         grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
         x_next = x - xi_o(0)*grad_objective
         x = projection(x, x_next)
-
         # TODO chceme ty iterace takto?
         for t in range(iters):
             # Step in direction of constraint
