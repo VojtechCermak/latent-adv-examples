@@ -1,0 +1,130 @@
+[
+    {
+        "name": "natural-wd-untargeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }        
+    },
+    {   "name": "natural-l2-untargeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }
+    },
+    {
+        "name": "natural-wd-targeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }        
+    },
+    {   "name": "natural-l2-targeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "mnist-cls",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }
+    },
+    {
+        "name": "robust-wd-untargeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }        
+    },
+    {   "name": "robust-l2-untargeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "misclassify",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }
+    },
+    {
+        "name": "robust-wd-targeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "wd",
+            "distance_args": {"loss": "sinkhorn", "p": 1, "blur": 0.1, "scaling": 0.5},
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }        
+    },
+    {   "name": "robust-l2-targeted",
+        "generator": "mnist-ali",
+        "generator_level": 2,
+        "classifier": "madry-robust",
+        "method": "projection",
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1
+            }
+    }
+]
