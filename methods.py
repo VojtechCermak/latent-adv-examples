@@ -226,7 +226,7 @@ class PenaltyPopMethod(BaseMethod):
             xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
 
         super().__init__(distance, distance_args, constraint)
-        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params_all = {str(k): str(v) for k, v in locals().items() if k not in ["__class__"]}
         self.params = {
             'rho': self.parse_scheduler(rho),
             'xi' : self.parse_scheduler(xi),
@@ -283,7 +283,7 @@ class ProjectionMethod(BaseMethod):
         if xi_o is None:
             xi_o = {'scheduler': 'SchedulerConstant', 'params': {'alpha': 1}}
 
-        self.params_all = {k: v for k, v in locals().items() if k not in ["__class__"]}
+        self.params_all = {str(k): str(v) for k, v in locals().items() if k not in ["__class__"]}
         self.params = {
             'xi_c': self.parse_scheduler(xi_c),
             'xi_o': self.parse_scheduler(xi_o),
