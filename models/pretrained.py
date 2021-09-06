@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torchvision import transforms
 import numpy as np
 import os
 import json
@@ -406,15 +405,16 @@ class EfficientNetClassifier(nn.Module):
     '''
     def __init__(self, device='cuda'):
         from efficientnet_pytorch import EfficientNet
+        from torchvision import transforms
         super().__init__()
-        self.classifier = EfficientNet.from_pretrained('efficientnet-b0')
-        self.classifier = self.classifier.eval().to(device)
-
-    def forward(self, x):
-        tfs = transforms.Compose([
+        self.tfs = transforms.Compose([
             transforms.Resize(224),
             transforms.Normalize(
                 mean = [0.485, 0.456, 0.406],
                 std  = [0.229, 0.224, 0.225]),
             ])
-        return self.classifier(tfs(x))
+        self.classifier = EfficientNet.from_pretrained('efficientnet-b0')
+        self.classifier = self.classifier.eval().to(device)
+
+    def forward(self, x):
+        return self.classifier(self.tfs(x))
