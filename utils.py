@@ -48,30 +48,6 @@ def batch_add_lsb(img_batch, add_lsb=0):
         img_add1 = torch.Tensor.repeat(img_add[:,1:2,:,:], (1,3,1,1))
         img_add2 = torch.Tensor.repeat(img_add[:,2:3,:,:], (1,3,1,1))        
         return torch.cat((img_batch, img_add0, img_add1, img_add2))
-        
-def import_module(path, name='module'):
-    '''
-    Imports module from file given its path
-    '''
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-def load_model(path, model_file=None, state_dict=None, device='cuda'):
-    if model_file is None:
-        with open(path + '\\' + 'args.json') as f:
-            args = json.load(f)
-        _, model_file = os.path.split(args['model'])
-    if state_dict is None:
-        state_dict = 'model_state_dict.pth'
-
-    model = import_module(path + '\\' + model_file).model
-    model.load_state_dict(torch.load(path + '\\' + state_dict))
-    model = model.to(device)
-    model.eval()
-    return model
-
 
 def class_sampler(classifier, generator, class_target, samples=100, threshold=0.99, max_steps=200, batch_size=32, device='cuda'):
     '''
@@ -103,10 +79,9 @@ def class_sampler(classifier, generator, class_target, samples=100, threshold=0.
     raise Exception('Not enough samples found. Decrease threshold! ')
 
 
-###### Sample grid
 def sample_grid(classifier, generator, device, no_classes=10):
     '''
-    For each class sample one example with different class.
+    Sample 10 x 9 grid of class pairs.
     '''
     data_a = []
     data_b = []
@@ -117,24 +92,4 @@ def sample_grid(classifier, generator, device, no_classes=10):
                 data_b.append(class_sampler(classifier, generator, b, samples=1, threshold=0.99, device=device))
     data_a = torch.cat(data_a)
     data_b = torch.cat(data_b)
-
-    labels = torch.tensor(np.repeat(np.arange(no_classes), no_classes-1), dtype=torch.long, device=device)
-    return data_a, data_b, labels
-
-
-def sample_subset(classifier, generator, no_samples, device='cuda', no_classes=10):
-    assert no_samples <= no_classes
-    data_a = []
-    data_b = []
-    for a in range(no_classes):
-        data_a.append(class_sampler(classifier, generator, a, samples=no_samples, threshold=0.99, device=device))
-
-        valid_b = list(set(range(no_classes)) - {a})[:no_samples]
-        for b in valid_b:
-            if a != b:
-                data_b.append(class_sampler(classifier, generator, b, samples=1, threshold=0.99, device=device))
-    data_a = torch.cat(data_a)
-    data_b = torch.cat(data_b)
-
-    labels = torch.tensor(np.repeat(np.arange(no_classes), no_classes-1), dtype=torch.long, device=device)
-    return data_a, data_b, labels
+    return data_a, data_b
