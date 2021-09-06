@@ -1,0 +1,1 @@
+python imagenet_attack.py -p "experiment.json" -o "results" -z z_animals.npy -i z_broccoli.npy

@@ -1,0 +1,66 @@
+[    
+    {
+        "name": "imagenet_lvl0",
+        "classifier": "imagenet-effnet",
+        "generator": "imagenet-bigbigan",
+        "generator_level": 0,
+        "target": 937,
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1.0
+        }
+    },
+    {
+        "name": "imagenet_lvl1",
+        "classifier": "imagenet-effnet",
+        "generator": "imagenet-bigbigan",
+        "generator_level": 1,
+        "target": 937,
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1.0
+        }
+    },
+    {
+        "name": "imagenet_lvl2",
+        "classifier": "imagenet-effnet",
+        "generator": "imagenet-bigbigan",
+        "generator_level": 2,
+        "target": 937,
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1.0
+        }
+    },
+    {
+        "name": "imagenet_lvl3",
+        "classifier": "imagenet-effnet",
+        "generator": "imagenet-bigbigan",
+        "generator_level": 3,
+        "target": 937,
+        "params": {
+            "iters": 1000,
+            "distance": "l2",
+            "constraint": "targeted",
+            "xi_c": {"scheduler": "SchedulerExponential",
+            "params": {"initial": 1, "gamma": 0.005}},
+            "xi_o": {"scheduler": "SchedulerConstant", "params": {"alpha": 1}},
+            "threshold": 1.0
+        }
+    }
+]
