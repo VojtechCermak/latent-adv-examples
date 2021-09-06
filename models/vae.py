@@ -5,7 +5,7 @@ from itertools import chain
 
 class VanillaVAE(nn.Module):
     '''
-    Vanilla Variational Autoencoder based on original Kingsma paper.
+    Variational Autoencoder based on original Kingsma paper.
     '''
     def __init__(self, encoder, decoder, device, size_z, lr=1e-3, loss='bce', beta=1):
         super().__init__()
