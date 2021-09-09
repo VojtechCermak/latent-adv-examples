@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 from projections import ConvergenceError, ProjectionLinf
 from projections import ProjectionBinarySearch
 from objectives import Objective
@@ -9,24 +8,6 @@ from constraints import ConstraintMisclassify, ConstraintClassifyTarget
 from geomloss import SamplesLoss
 import schedulers
 import distances
-
-def calculate_batch(variables, is_method=False):
-    '''
-    Simulate batch computing - run decorated function in loop.
-    Variables argument: number of variables needed to split for the loop.
-    '''
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            args_batch = args[:variables]
-            args_other = args[variables:]
-            batch_size = args_batch[0].shape[0]
-
-            data = []
-            for i in range(batch_size):
-                data.append(func(*[var[[i]] for var in args_batch], *args_other, **kwargs))
-            return torch.cat(data)
-        return wrapper
-    return decorator
 
 
 def calculate_gradients(objective, x, norm=None):
@@ -46,48 +27,6 @@ def calculate_gradients(objective, x, norm=None):
         return grad / grad.norm(p=2, dim=tuple(range(1, x.ndim)), keepdim=True)
     else:
         raise NotImplementedError('Unknown normalization method')
-
-
-def fgsm(x0, y, classifier, epsilon):
-    '''
-    Fast Gradient Sign method of Goodfellow.
-    '''
-    objective = Objective(y, nn.CrossEntropyLoss(), classifier, targeted=False)
-    projection = ProjectionLinf(epsilon)
-    # TODO I believe that this is wrong. The step_size should be huge.
-    # TODO It will not work for epsilon > 1 (but we probably do not need it).
-    return projected_gd(x0, objective, projection, grad_norm='sign', steps=1, step_size=1.0, clip=(0, 1))
-
-
-def projected_gd(x0, objective, projection, grad_norm, step_size, steps=50, clip=None):
-    '''
-    Projected Gradient Descent method.
-    '''
-    x = x0.clone()
-    for _ in range(steps):
-
-        # Gradient descent step
-        grad = calculate_gradients(objective, x, grad_norm)
-        x = x - step_size*grad
-
-        # Projection step
-        x = projection(x0, x)
-
-        # Stay within pixel range
-        if clip is not None:
-            x = x.clip(*clip) 
-    return x
-
-
-def bisection_method(x0, x, model, threshold=1e-6):
-    '''
-    Interpolation between x and x0.
-
-    Assumes that x and x0 are classified into different classes.
-    '''
-    constraint = ConstraintMisclassify(x0, model)
-    projection = ProjectionBinarySearch(constraint, threshold=threshold)
-    return projection(x0, x)
 
 
 class BaseMethod():
@@ -175,8 +114,8 @@ class PenaltyMethod(BaseMethod):
         grad_norm = 'l2',
     ):
         super().__init__(distance, distance_args, constraint)
-        if rho is None: # TODO prepsat. rostouci rho + n asi vetsi
-            rho = {'scheduler': 'SchedulerStep', 'params': {'initial': 10e8, 'gamma': 1, 'n': 10 }}
+        if rho is None:
+            raise ValueError('Invalid rho')
         if xi is None:
             xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
 
@@ -207,62 +146,6 @@ class PenaltyMethod(BaseMethod):
             x = x - xi(t)*grad
         return x.detach()
 
-    
-class PenaltyPopMethod(BaseMethod):
-    def __init__(
-        self,
-        distance = 'l2',
-        distance_args = None,
-        constraint = 'misclassify',
-        rho = None,
-        xi  = None,
-        iters = 100,
-        grad_norm = 'l2',
-        max_unchanged = 10
-    ):
-        if rho is None:
-            rho = {'scheduler': 'SchedulerStep', 'params': {'initial': 10e8, 'gamma': 1, 'n': 10 }}
-        if xi is None:
-            xi  = {'scheduler': 'SchedulerExponential', 'params':{'initial': 1, 'gamma': 0.01 }}
-
-        super().__init__(distance, distance_args, constraint)
-        self.params_all = {str(k): str(v) for k, v in locals().items() if k not in ["__class__"]}
-        self.params = {
-            'rho': self.parse_scheduler(rho),
-            'xi' : self.parse_scheduler(xi),
-            'iters': iters,
-            'grad_norm': grad_norm,
-            'max_unchanged': max_unchanged
-        }
-
-    def __call__(self, x0, classifier, generator, target=None, **kwargs):
-        x_init = x0
-        return super().__call__(x0, x_init, classifier, generator, target)
-        
-    def method(self, objective, constraint, x_init, xi, rho, grad_norm='l2', iters=100, max_unchanged=10):
-        '''
-        Because Vojta does not believe me, he needs to have his own method.
-        '''
-        result = torch.full_like(x_init, float('nan'))
-        x = x_init.clone()
-
-        unchanged = 0
-        for t in range(iters):
-            # Optimization step
-            l = lambda x: objective(x) + rho(t)*F.relu(constraint(x))**2
-            grad = calculate_gradients(l, x, norm=grad_norm)
-            x = x - xi(t)*grad
-
-            # Termination condition
-            if torch.sign(constraint(x)) > 0:
-                unchanged += 1
-            else:
-                unchanged = 0
-                result = x
-            if unchanged > max_unchanged:
-                break
-        return result.detach()
-    
 
 class ProjectionMethod(BaseMethod):
     def __init__(
@@ -310,7 +193,7 @@ class ProjectionMethod(BaseMethod):
         grad_objective = calculate_gradients(objective, x, norm=grad_norm_o)
         x_next = x - xi_o(0)*grad_objective
         x = projection(x, x_next)
-        # TODO chceme ty iterace takto?
+
         for t in range(iters):
             # Step in direction of constraint
             if not (x_next == x).all().item():

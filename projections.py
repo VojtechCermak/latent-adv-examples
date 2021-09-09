@@ -1,30 +1,21 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 
 class ConvergenceError(Exception):
     pass
 
 
-class Projection():
-    '''
-    Super class for projections of x onto some ball around x0.
-    '''
-    def __call__(self, x0, x):
-        pass
-
-
-class ProjectionIdentity(Projection):
+class ProjectionIdentity(nn.Module):
     '''
     Project x to itself.
     '''
-    def __call__(self, x0, x):
+    def forward(self, x0, x):
         return x
 
 
-class ProjectionL2(Projection):
+class ProjectionL2(nn.Module):
     '''
     Project x to the Euclidean epsilon ball around x0.
     '''
@@ -36,13 +27,13 @@ class ProjectionL2(Projection):
         x = torch.where(x_norm > eps, eps*(x / x_norm), x)
         return x
 
-    def __call__(self, x0, x):
+    def forward(self, x0, x):
         delta = x - x0
         delta_projected = self.projection(delta, self.eps)
         return x0 + delta_projected
 
 
-class ProjectionLinf(Projection):
+class ProjectionLinf(nn.Module):
     '''
     Project x to the l-inf epsilon ball around x0.
     '''
@@ -52,7 +43,7 @@ class ProjectionLinf(Projection):
     def projection(self, x, eps):
         return x.clamp(-eps, eps)
 
-    def __call__(self, x0, x):
+    def forward(self, x0, x):
         delta = x - x0
         delta_projected = self.projection(delta, self.eps)
         return x0 + delta_projected
@@ -81,14 +72,13 @@ class ProjectionBinarySearch(nn.Module):
             one_x0 = x0[i].unsqueeze(0)
             one_x = x[i].unsqueeze(0)
             try:
-                if one_x.isnan().any() or one_x.isnan().any():
+                if one_x.isnan().any() or one_x0.isnan().any():
                     raise ConvergenceError('All nans')
-
                 f = lambda c: self.constraint(self.combine(one_x0, one_x, c), subset=[i])                
                 c = self.binary_search_negative(f, 0, 1, self.threshold, self.max_steps)
                 projected = self.combine(one_x0, one_x, c)
             except ConvergenceError as e:
-                #print(e)
+                print(e)
                 projected = torch.full_like(one_x, float('nan'))
             results.append(projected)
         return torch.cat(results)

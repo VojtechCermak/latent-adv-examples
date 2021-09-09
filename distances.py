@@ -36,7 +36,6 @@ class DecodedDistribution(Decoded):
     '''
     def forward(self, z):
         x = self.decoder.decode(z)
-        # TODO why do we have 1e-8 here?
         x[x<=0] = 1e-8
         return x / x.norm(1, dim=(2, 3), keepdim=True)
 
@@ -86,11 +85,11 @@ class GeomLoss(Distance):
 
     def weighted_point_cloud(self, x):
         '''
-        Converts BCHW sample to 2D weighted point cloud
+        Converts BCHW sample to 2D weighted point cloud.
         '''
         B, C, H, W = x.shape
         weights = x.view(B*C, H*W)
         a, b = torch.meshgrid(torch.arange(0., H)/H, torch.arange(0., W)/W)
         points = torch.stack((a, b), dim=2).view(-1, 2).to(x.device)
-        points = points.repeat(B*C, 1, 1) # Repeat points across 
+        points = points.repeat(B*C, 1, 1)
         return weights, points

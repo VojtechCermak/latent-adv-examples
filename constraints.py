@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from objectives import Margin
@@ -88,8 +87,6 @@ class ConstraintDistance(Constraint):
             x0 = self.x0[subset]
         else:
             x0 = self.x0
-
         if x.shape[0] != x0.shape[0]:
             raise ValueError('x and subset of x0 have different batch size.')
-
         return self.distance(x, x0) - self.epsilon

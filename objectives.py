@@ -2,26 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class Objective(nn.Module):
-    '''
-    Objective(x) = loss(model(x), y) if targetted or 
-    Objective(x) = -loss(model(x), y) if not targetted.
-    '''
-    def __init__(self, y, loss, model, targeted):
-        super().__init__()
-        self.y = y
-        self.loss = loss
-        self.model = model
-        self.targeted = targeted
-
-    def forward(self, x):
-        prediction  = self.model(x)
-        if self.targeted:
-            return self.loss(prediction, self.y)
-        else:
-            return -self.loss(prediction, self.y)
-
-
 class Margin(nn.Module):
     '''
     Objective(x) = Margin(prediction, k)
@@ -47,3 +27,23 @@ class CrossEntropyLossOH(nn.Module):
     def forward(self, prediction, y):
         ce = torch.sum(-y*F.log_softmax(prediction, dim=1), dim=1)
         return torch.mean(ce)
+
+
+class Objective(nn.Module):
+    '''
+    Objective(x) = loss(model(x), y) if targetted or 
+    Objective(x) = -loss(model(x), y) if not targetted.
+    '''
+    def __init__(self, y, loss, model, targeted):
+        super().__init__()
+        self.y = y
+        self.loss = loss
+        self.model = model
+        self.targeted = targeted
+
+    def forward(self, x):
+        prediction  = self.model(x)
+        if self.targeted:
+            return self.loss(prediction, self.y)
+        else:
+            return -self.loss(prediction, self.y)

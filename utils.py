@@ -1,17 +1,16 @@
-import os
-import json
 import torch
 import torch.nn.functional as F
 import numpy as np
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
-import importlib
+
 
 def fix_seed(seed=1):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+
 
 def grid_plot(img_batch, save_as=None, nrows=6, already_grid=False, figsize=None):
     '''
@@ -34,20 +33,6 @@ def grid_plot(img_batch, save_as=None, nrows=6, already_grid=False, figsize=None
     else:
         plt.show()
 
-def batch_add_lsb(img_batch, add_lsb=0):
-    if add_lsb == 0:
-        return img_batch
-    elif (add_lsb == 1) or (img_batch.shape[1] == 1):
-        sample_int = (img_batch*255).type(torch.uint8)
-        img_add = torch.remainder(sample_int, 2).type(torch.float)
-        return torch.cat((img_batch, img_add))
-    elif add_lsb == 2:
-        sample_int = (img_batch*255).type(torch.uint8)
-        img_add = torch.remainder(sample_int, 2).type(torch.float)
-        img_add0 = torch.Tensor.repeat(img_add[:,0:1,:,:], (1,3,1,1))
-        img_add1 = torch.Tensor.repeat(img_add[:,1:2,:,:], (1,3,1,1))
-        img_add2 = torch.Tensor.repeat(img_add[:,2:3,:,:], (1,3,1,1))        
-        return torch.cat((img_batch, img_add0, img_add1, img_add2))
 
 def class_sampler(classifier, generator, class_target, samples=100, threshold=0.99, max_steps=200, batch_size=32, device='cuda'):
     '''
@@ -59,7 +44,6 @@ def class_sampler(classifier, generator, class_target, samples=100, threshold=0.
     '''
     filled = 0
     data = torch.zeros((samples, generator.size_z, 1, 1), device=device)
-
     for i in range(max_steps):
         # Make predictions
         with torch.no_grad():
@@ -68,7 +52,7 @@ def class_sampler(classifier, generator, class_target, samples=100, threshold=0.
             output = F.softmax(classifier(imgs), 1).data.cpu()
             softmax, class_id = output.max(dim=1)
 
-        # Collect the predictions of given class
+        # Collect predictions of given class
         mask = (class_id == class_target) & (softmax > threshold)
         for tensor in z[mask]:
             data[filled] = tensor
