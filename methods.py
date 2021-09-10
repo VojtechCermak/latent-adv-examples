@@ -206,7 +206,6 @@ class ProjectionMethod(BaseMethod):
                         converged = True
                         break
                     else:
-                        print('Invalid step... correcting')
                         lr = lr / 2
                 if not converged:
                     raise ConvergenceError("Step correction is in infinite cycle")
