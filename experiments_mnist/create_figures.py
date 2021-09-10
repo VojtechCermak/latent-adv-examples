@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from torchvision.utils import make_grid
+import sys
+sys.path.insert(0, "..")
 
 def invert(data):
     return 1-data
@@ -69,18 +71,25 @@ def plot_matrix(ax, path):
     ax.xaxis.set_ticks_position('top')
     ax.imshow(grid)
 
-def plot_untargeted_matrix(ax, path):
+def plot_untargeted_matrix(path, fig):
+    from models.pretrained import MnistClassifier
+    classifier = MnistClassifier()
     with open(path, 'rb') as handle:
         data = pickle.load(handle)
-    images = torch.tensor(data['x_per'])
-    grid = make_grid(invert(images), nrow=9, normalize=False)
-    grid = grid.cpu().detach().numpy()
-    grid = np.transpose(grid, (1,2,0))
-    ax.set_yticks(np.linspace(16, grid.shape[0]-16, 10))
-    ax.set_yticklabels(np.arange(10))
-    ax.set_ylabel('Original class')
-    ax.set_xticks([])
-    ax.imshow(grid)
+    x_per = torch.tensor(data['x_per'], device='cuda')
+    labels = classifier(x_per).argmax(1)
+
+    gs = gridspec.GridSpec(10, 9)
+    gs.update(wspace=0.05, hspace=0.05)
+    for i, img in enumerate(x_per):
+        ax = fig.add_subplot(gs[i])
+        ax.set_xlabel(f'{labels[i].item()}', fontsize=12)
+        ax.xaxis.set_label_coords(0.1, 0.95) 
+        ax.set_yticks([])
+        ax.set_xticks([])
+        img = make_grid(img)
+        img = 1 - img.cpu().detach()
+        ax.imshow(img.permute(1, 2, 0))
 
 
 if __name__ == "__main__":
@@ -144,15 +153,14 @@ if __name__ == "__main__":
     path = os.path.join(args.path_input, 'natural-wd-targeted.pickle')
     plot_matrix(ax, path)
     fig.savefig(os.path.join(args.path_output, 'targeted_matrix.png'), bbox_inches='tight')
-
-
-    #4. Untargeted matrix
-    fig = plt.figure(constrained_layout=True, figsize=(15, 8))
-    subfigs = fig.subfigures(1, 2, wspace=0.05)
-    ax = subfigs[0].add_subplot()
-    path = os.path.join(args.path_input, 'natural-l2-untargeted.pickle')
-    plot_untargeted_matrix(ax, path)
-    ax = subfigs[1].add_subplot()
+            
+    fig = plt.figure(figsize=(9, 10))    
     path = os.path.join(args.path_input, 'natural-wd-untargeted.pickle')
-    plot_untargeted_matrix(ax, path)
-    fig.savefig(os.path.join(args.path_output, 'untargeted_matrix.png'), bbox_inches='tight')
+    plot_untargeted_matrix(path, fig)
+    fig.savefig(os.path.join(args.path_output, 'untargeted_matrix_wd.png'), bbox_inches='tight')
+
+    fig = plt.figure(figsize=(9, 10))    
+    path = os.path.join(args.path_input, 'natural-l2-untargeted.pickle')
+    plot_untargeted_matrix(path, fig)
+    
+    fig.savefig(os.path.join(args.path_output, 'untargeted_matrix_l2.png'), bbox_inches='tight')
