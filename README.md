@@ -55,13 +55,7 @@ To encode images to their latent representation to run following:
 python imagenet_encode.py -p <folder with images to encode>
 ```
 
-
-
-
 To replicate our imagenet results, run:
-```shell
-python imagenet_attack.py -p "experiment.json" -o "results" -z "/images_animals/encoded/encoded_z_0.npy" -i "/images_broccoli/encoded/encoded_z_0.npy"
-```
 ```shell
 python imagenet_attack.py -p "experiment.json" -o "results" -z z_animals.npy -i z_broccoli.npy
 ```
