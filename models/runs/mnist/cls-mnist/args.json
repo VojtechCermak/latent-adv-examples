@@ -1,0 +1,10 @@
+{
+  "model": "models/models/cls_mnist.py",
+  "task": "cls",
+  "dataset": "mnist",
+  "tag": "cls-mnist",
+  "device": "cuda",
+  "epochs": 20,
+  "batch_size": 128,
+  "seed": 999
+}

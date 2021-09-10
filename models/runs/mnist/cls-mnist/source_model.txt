@@ -1,0 +1,26 @@
+class Classifier(nn.Module):
+    '''
+    Basic classifier.
+    '''
+    def __init__(self, net, lr=0.001, device='cuda'):
+        super().__init__()
+        self.device = device
+        self.net = net.to(device)
+        self.optim = torch.optim.Adam(self.net.parameters(), lr=lr, weight_decay=0)
+        self.criterion = nn.CrossEntropyLoss()
+        self.scheduler = None
+
+    def epoch_end(self):
+        if self.scheduler is not None:
+            self.scheduler.step()
+
+    def predict(self, batch):
+        return self.net(batch)
+
+    def train_step(self, batch, labels):
+        self.optim.zero_grad()
+        output = self.net(batch)
+        loss = self.criterion(output, labels)
+        loss.backward()
+        self.optim.step()
+        return {'loss': loss.data}

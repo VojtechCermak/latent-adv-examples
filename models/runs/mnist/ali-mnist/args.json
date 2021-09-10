@@ -1,0 +1,10 @@
+{
+  "model": "models/models/ali_mnist.py",
+  "task": "end",
+  "dataset": "mnist",
+  "tag": "ali-mnist-nf32",
+  "device": "cuda",
+  "epochs": 50,
+  "batch_size": 64,
+  "seed": 999
+}

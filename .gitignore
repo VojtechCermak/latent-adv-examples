@@ -1,13 +1,23 @@
-runs/
 __pycache__/
 .ipynb_checkpoints/
+
+models/runs/*
+!models/runs/
+models/runs/mnist/*
+!models/runs/mnist/
+!models/runs/mnist/ali-mnist/
+!models/runs/mnist/cls-mnist/
+!models/runs/mnist/pretrained/
 
 adexp-env/
 old/
 experiments/results/images*
 
-*.png
+figures*
 *.jpg
-*.jpeg
+*.png
+*.JPEG
+
+
 *.npy
 *.pickle
