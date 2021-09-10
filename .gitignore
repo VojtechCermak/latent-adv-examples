@@ -11,8 +11,6 @@ models/runs/mnist/*
 
 adexp-env/
 old/
-experiments/results/images*
-
 figures*
 *.jpg
 *.png
