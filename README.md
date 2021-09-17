@@ -4,8 +4,10 @@ This repository contains all necessary the code to replicate results of paper: *
 
 We extend the usuall approach to constructing adversarial examples that are based on norm bound pixel perturbations. Instead of modifying pixels directly, we exploit high level features learned by generative models and modify outputs of middle layers in the decoder network. We demonstrate on MNIST and ImageNet datasets, in both targeted and untargeted settings, that our method keeps natural structure of the input data. Additionally, the our perturbations are concentrated around key features such as edges . This is in contrast to standard pixel based attacks, where the perturbation is in the form of randomly looking noise.
 
+### Example:
+![Adversarial example](notebooks/figures/slides_imagenet_show2.png "Adversarial example")
 
-![Adversarial example](notebooks/figures/slides_imagenet_show2.png, "Adversarial example")
+We can see that most of the changes in form of hight-level features such as fur color, fur texture or beak length.
 
 ## Dependencies
 For main body of our experiments is used PyTorch (1.9.0). Additional libraries, Foolbox (3.3.1.) Geomloss, and pretrained ImageNet models can be installed using pip:
