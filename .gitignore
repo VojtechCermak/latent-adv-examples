@@ -11,9 +11,9 @@ models/runs/mnist/*
 
 adexp-env/
 old/
-figures*
 *.jpg
 *.png
+!slides_imagenet_show2.png
 *.JPEG
 
 *.pickle
